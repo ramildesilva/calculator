@@ -1,0 +1,1794 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Tally Calculators</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,650;12..96,750&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: instrument-panel app — fixed left index of calculators, work surface with inputs (left) and live readout (right). */
+:root{
+  --bg:#F1F3F0; --surface:#FFFFFF; --surface-2:#E7EBE6; --sunk:#E0E5DF; --ink:#121A17; --muted:#5A6862; --line:#D2D8D1;
+  --accent:#0B6B5A; --accent-ink:#FFFFFF; --accent-soft:#DAEDE6; --accent-line:#A9D3C6;
+  --c1:#0B6B5A; --c2:#CC8529; --c3:#4D69B5; --c4:#B4516A; --c5:#76882B;
+  --good:#2C7A4D; --warn:#A86F13; --bad:#B03737; --good-soft:#DFF0E4; --warn-soft:#F6EAD2; --bad-soft:#F5DEDB;
+  --shadow:0 1px 2px rgba(18,26,23,.06),0 6px 20px rgba(18,26,23,.06);
+  --f-display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;
+  --f-body:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,'SF Mono',Consolas,monospace;
+  --r:12px; --r-sm:8px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0D1311; --surface:#141C19; --surface-2:#1B2521; --sunk:#101715; --ink:#E3EAE6; --muted:#8FA099; --line:#27332E;
+  --accent:#46C2A5; --accent-ink:#05231C; --accent-soft:#15362E; --accent-line:#24584B;
+  --c1:#46C2A5; --c2:#E6A653; --c3:#8BA3EA; --c4:#E2839A; --c5:#B6C75B;
+  --good:#5CC58A; --warn:#E4B14F; --bad:#EF7C74; --good-soft:#15321F; --warn-soft:#382C14; --bad-soft:#3B1C1A;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 6px 20px rgba(0,0,0,.3); color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0D1311; --surface:#141C19; --surface-2:#1B2521; --sunk:#101715; --ink:#E3EAE6; --muted:#8FA099; --line:#27332E;
+  --accent:#46C2A5; --accent-ink:#05231C; --accent-soft:#15362E; --accent-line:#24584B;
+  --c1:#46C2A5; --c2:#E6A653; --c3:#8BA3EA; --c4:#E2839A; --c5:#B6C75B;
+  --good:#5CC58A; --warn:#E4B14F; --bad:#EF7C74; --good-soft:#15321F; --warn-soft:#382C14; --bad-soft:#3B1C1A;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 6px 20px rgba(0,0,0,.3); color-scheme:dark }
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);-webkit-font-smoothing:antialiased}
+a{color:inherit}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.num,.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+svg{display:block}
+
+/* ---------- Top bar ---------- */
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;display:flex;align-items:center;gap:12px;
+  padding:10px 20px;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:9px;text-decoration:none;font-family:var(--f-display);font-weight:750;font-size:21px;letter-spacing:-.02em}
+.brand-mark{width:28px;height:28px;border-radius:8px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-family:var(--f-mono);font-size:15px;font-weight:600}
+.search-trigger{flex:1;max-width:460px;margin-left:auto;margin-right:auto;display:flex;align-items:center;gap:10px;padding:8px 12px;border:1px solid var(--line);
+  background:var(--surface);border-radius:999px;color:var(--muted);cursor:pointer;text-align:left}
+.search-trigger:hover{border-color:var(--accent-line)}
+.search-trigger span{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+kbd{font-family:var(--f-mono);font-size:11px;padding:2px 6px;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;background:var(--surface-2);color:var(--muted)}
+.icon-btn{width:38px;height:38px;display:grid;place-items:center;border-radius:10px;border:1px solid transparent;background:none;cursor:pointer;color:var(--muted);flex:none}
+.icon-btn:hover{background:var(--surface-2);color:var(--ink)}
+.icon-btn svg{width:19px;height:19px}
+.menu-btn{display:none}
+
+/* ---------- Shell ---------- */
+.shell{display:grid;grid-template-columns:250px minmax(0,1fr);min-height:calc(100% - 59px)}
+.sidebar{border-right:1px solid var(--line);padding-block:18px 40px;padding-inline:12px;position:sticky;top:59px;height:calc(100vh - 59px);overflow-y:auto}
+.nav-sec{margin-bottom:18px}
+.nav-sec h3{margin:0 0 4px;padding:0 10px;font:600 11px/1.6 var(--f-body);letter-spacing:.09em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:8px}
+.nav-sec h3 i{width:7px;height:7px;border-radius:2px;display:inline-block}
+.nav-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 10px;border-radius:8px;text-decoration:none;font-size:14px;color:var(--ink)}
+.nav-item:hover{background:var(--surface-2)}
+.nav-item.active{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.nav-item .fav-dot{color:var(--c2);font-size:11px}
+.side-foot{padding:6px 10px;font-size:12px;color:var(--muted)}
+main{min-width:0;padding-block:28px 64px;padding-inline:clamp(16px,3.2vw,44px)}
+.scrim{display:none}
+
+/* ---------- Calculator page ---------- */
+.calc{max-width:1180px;margin:0 auto}
+.crumbs{font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center}
+.crumbs a{text-decoration:none}
+.crumbs a:hover{color:var(--accent)}
+.head-row{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:4px}
+h1{font-family:var(--f-display);font-weight:750;letter-spacing:-.025em;font-size:clamp(28px,3.4vw,38px);line-height:1.1;margin:0;text-wrap:balance}
+.lede{color:var(--muted);margin:8px 0 0;max-width:68ch}
+.head-actions{display:flex;gap:6px}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 13px;border-radius:9px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-size:13.5px;font-weight:500;white-space:nowrap}
+.btn:hover{border-color:var(--accent-line);color:var(--accent)}
+.btn svg{width:16px;height:16px}
+.btn.on{color:var(--c2);border-color:color-mix(in srgb,var(--c2) 45%,var(--line))}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.primary:hover{filter:brightness(1.07);color:var(--accent-ink)}
+.calc-body{display:grid;grid-template-columns:minmax(290px,390px) minmax(0,1fr);gap:24px;margin-top:24px;align-items:start}
+.calc-body.full{display:block}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+.inputs{padding:20px;display:flex;flex-direction:column;gap:16px;position:sticky;top:80px}
+.inputs-title{font:600 11px/1 var(--f-body);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field>label,.field .flabel{font-size:13px;font-weight:500;color:var(--ink)}
+.field .hint{font-size:12px;color:var(--muted)}
+.frow{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:10px}
+.frow:not(:has(.field:not([hidden]))){display:none}
+.inp{display:flex;align-items:center;border:1px solid var(--line);background:var(--sunk);border-radius:var(--r-sm);transition:border-color .15s,box-shadow .15s}
+.inp:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.inp input,.inp select,.inp textarea{flex:1;min-width:0;border:0;background:none;padding:9px 11px;outline:none;font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:15px}
+.inp select{font-family:var(--f-body);font-size:14.5px;cursor:pointer;appearance:none;padding-right:30px;
+  background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+  background-position:calc(100% - 16px) 52%,calc(100% - 11px) 52%;background-size:5px 5px;background-repeat:no-repeat}
+.inp select option{background:var(--surface);color:var(--ink)}
+.inp textarea{resize:vertical;min-height:96px;line-height:1.5}
+.inp input[type=date],.inp input[type=time]{font-family:var(--f-mono)}
+.affix{padding:0 11px;color:var(--muted);font-size:13px;font-family:var(--f-mono);white-space:nowrap}
+.affix:first-child{padding-right:0}
+.affix:last-child{padding-left:0}
+.inp.text input{font-family:var(--f-mono)}
+input[type=range]{width:100%;accent-color:var(--accent);margin:2px 0 0;height:18px}
+.seg{display:flex;flex-wrap:wrap;gap:3px;padding:3px;background:var(--sunk);border:1px solid var(--line);border-radius:var(--r-sm)}
+.seg button{flex:1 1 auto;border:0;background:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:13.5px;color:var(--muted);white-space:nowrap}
+.seg button:hover{color:var(--ink)}
+.seg button[aria-checked=true]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.check{display:flex;align-items:center;gap:9px;font-size:14px;cursor:pointer}
+.check input{width:17px;height:17px;accent-color:var(--accent)}
+
+.results{display:flex;flex-direction:column;gap:16px;min-width:0}
+.primary{padding:22px 24px;border-radius:var(--r);background:var(--accent-soft);border:1px solid var(--accent-line);position:relative;overflow:hidden}
+.p-label{font-size:13px;font-weight:600;color:var(--accent);letter-spacing:.02em}
+.p-value{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-weight:600;font-size:clamp(30px,4.6vw,46px);line-height:1.15;letter-spacing:-.02em;margin-top:4px;word-break:break-word}
+.p-value small{font-size:.45em;font-weight:500;color:var(--muted);letter-spacing:0}
+.p-sub{margin-top:6px;color:var(--ink);font-size:14px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.stat{padding:13px 15px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm)}
+.s-label{font-size:12px;color:var(--muted)}
+.s-value{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:18px;font-weight:600;margin-top:2px;word-break:break-word}
+.stat.good .s-value{color:var(--good)} .stat.warn .s-value{color:var(--warn)} .stat.bad .s-value{color:var(--bad)}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12.5px;font-weight:600;background:var(--surface-2);color:var(--ink)}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.pill.good{background:var(--good-soft);color:var(--good)} .pill.warn{background:var(--warn-soft);color:var(--warn)} .pill.bad{background:var(--bad-soft);color:var(--bad)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;min-width:0}
+.card h4{margin:0 0 12px;font:600 13px/1.3 var(--f-body);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.card h4 span{color:var(--muted);font-weight:400}
+.rows{margin:0;display:grid;grid-template-columns:1fr auto;column-gap:16px}
+.rows dt,.rows dd{padding:9px 0;border-bottom:1px solid var(--line);margin:0}
+.rows dt{color:var(--muted);font-size:14px}
+.rows dd{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-weight:500;font-size:14.5px}
+.rows dt:nth-last-child(2),.rows dd:last-child{border-bottom:0}
+.notes{font-size:13px;color:var(--muted);line-height:1.55;max-width:75ch}
+.notes p{margin:0 0 6px}
+.res-empty{padding:28px;border:1px dashed var(--line);border-radius:var(--r);color:var(--muted);background:var(--surface)}
+.res-empty strong{color:var(--ink);display:block;margin-bottom:4px}
+details.tbl,details.formula{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+details>summary{cursor:pointer;padding:14px 20px;font-weight:600;font-size:14px;list-style:none;display:flex;justify-content:space-between;align-items:center}
+details>summary::-webkit-details-marker{display:none}
+details>summary::after{content:"+";font-family:var(--f-mono);color:var(--muted);font-size:17px}
+details[open]>summary::after{content:"−"}
+details>summary:hover{background:var(--surface-2)}
+.tbl-wrap{max-height:420px;overflow:auto;border-top:1px solid var(--line)}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{padding:8px 14px;text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+thead th{position:sticky;top:0;background:var(--surface-2);font-weight:600;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+tbody td{font-family:var(--f-mono);font-variant-numeric:tabular-nums;border-bottom:1px solid var(--line)}
+tbody tr:hover td{background:var(--surface-2)}
+.formula-body{padding:4px 20px 18px;font-size:14px;color:var(--muted);max-width:78ch}
+.formula-body code{font-family:var(--f-mono);font-size:13px;background:var(--surface-2);padding:2px 6px;border-radius:5px;color:var(--ink)}
+
+/* charts */
+.chart{position:relative}
+.chart-svg{width:100%;height:auto;overflow:visible}
+.chart .grid{stroke:var(--line);stroke-width:1}
+.chart .axis{stroke:var(--muted);stroke-width:1;opacity:.7}
+.chart .tick{fill:var(--muted);font:11px var(--f-mono)}
+.chart .lbl{fill:var(--ink);font:600 12px var(--f-body)}
+.chart .hover-line{stroke:var(--muted);stroke-dasharray:3 3}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--bg);padding:8px 10px;border-radius:8px;font-size:12px;line-height:1.5;white-space:nowrap;z-index:5;box-shadow:var(--shadow)}
+.tip b{font-family:var(--f-mono);font-weight:600}
+.tip .sw{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px;font-size:12.5px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.donut-wrap{display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+.donut-wrap svg{width:170px;height:170px;flex:none}
+.donut-legend{flex:1;min-width:180px;display:flex;flex-direction:column;gap:8px}
+.dl-row{display:grid;grid-template-columns:12px 1fr auto auto;gap:10px;align-items:center;font-size:14px}
+.dl-row i{width:12px;height:12px;border-radius:3px}
+.dl-row b{font-family:var(--f-mono);font-weight:500;font-variant-numeric:tabular-nums}
+.dl-row em{font-style:normal;color:var(--muted);font-family:var(--f-mono);font-size:12px;min-width:44px;text-align:right}
+.hbars{display:flex;flex-direction:column;gap:9px}
+.hbar{display:grid;grid-template-columns:minmax(80px,140px) 1fr auto;gap:12px;align-items:center;font-size:13.5px}
+.hbar .track{height:10px;background:var(--surface-2);border-radius:5px;overflow:hidden}
+.hbar .fill{height:100%;border-radius:5px;background:var(--accent)}
+.hbar b{font-family:var(--f-mono);font-weight:500;font-variant-numeric:tabular-nums;min-width:70px;text-align:right}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font-family:var(--f-mono);font-variant-numeric:tabular-nums;padding:6px 11px;background:var(--surface);border:1px solid var(--line);border-radius:8px;font-size:15px}
+
+/* ---------- Scientific ---------- */
+.sci-wrap{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:20px;align-items:start}
+.sci{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;box-shadow:var(--shadow)}
+.sci-display{background:var(--sunk);border:1px solid var(--line);border-radius:11px;padding:10px 14px 12px;margin-bottom:12px}
+.sci-top{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:18px}
+.sci-flags{display:flex;gap:6px}
+.sci-flags span{font:600 10px/1 var(--f-mono);letter-spacing:.06em;padding:3px 5px;border-radius:4px;background:var(--surface-2);color:var(--muted)}
+.sci-flags span.lit{background:var(--accent-soft);color:var(--accent)}
+.sci-prev{font:12px var(--f-mono);color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sci-expr{width:100%;border:0;background:none;outline:none;font:500 19px/1.4 var(--f-mono);text-align:right;padding:6px 0 0;color:var(--ink)}
+.sci-result{font:600 34px/1.2 var(--f-mono);text-align:right;font-variant-numeric:tabular-nums;overflow-x:auto;white-space:nowrap;letter-spacing:-.02em;scrollbar-width:none}
+.sci-result.preview{color:var(--muted);font-weight:500}
+.sci-result.err{color:var(--bad);font-size:16px;font-family:var(--f-body);padding-top:10px}
+.sci-result sup{font-size:.55em}
+.sci-pads{display:grid;grid-template-columns:5fr 4fr;gap:12px}
+.pad{display:grid;gap:6px}
+.pad.fn{grid-template-columns:repeat(5,1fr)}
+.pad.nm{grid-template-columns:repeat(4,1fr)}
+.key{border:1px solid var(--line);border-bottom-width:2px;background:var(--surface-2);border-radius:9px;min-height:44px;padding:4px;cursor:pointer;font:500 15px var(--f-mono);transition:transform .05s,background .12s;touch-action:manipulation;user-select:none}
+.key:hover{background:var(--sunk)}
+.key:active{transform:translateY(1px);border-bottom-width:1px}
+.pad.fn .key{font-size:13px;min-height:38px;background:var(--surface)}
+.pad.fn .key:hover{background:var(--surface-2)}
+.key.d{background:var(--surface);font-size:18px}
+.key.op{color:var(--accent);font-size:19px}
+.key.eq{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-size:20px}
+.key.eq:hover{filter:brightness(1.08);background:var(--accent)}
+.key.clr{color:var(--bad)}
+.key.lit{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-line)}
+.sci-side{display:flex;flex-direction:column;gap:12px}
+.hist{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.hist-head{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line);font-weight:600;font-size:13px}
+.hist-head button{border:0;background:none;color:var(--muted);cursor:pointer;font-size:12.5px}
+.hist-head button:hover{color:var(--bad)}
+.hist-list{max-height:330px;overflow-y:auto}
+.hist-item{display:block;width:100%;text-align:right;border:0;border-bottom:1px solid var(--line);background:none;padding:9px 14px;cursor:pointer}
+.hist-item:hover{background:var(--surface-2)}
+.hist-item .he{font:12.5px var(--f-mono);color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hist-item .hr{font:600 15px var(--f-mono);font-variant-numeric:tabular-nums}
+.hist-empty{padding:18px 14px;color:var(--muted);font-size:13px}
+.tips{font-size:12.5px;color:var(--muted);line-height:1.6;padding:12px 14px;border:1px dashed var(--line);border-radius:var(--r)}
+.tips code{font-family:var(--f-mono);color:var(--ink);background:var(--surface-2);padding:1px 5px;border-radius:4px}
+
+/* ---------- Home ---------- */
+.home{max-width:1180px;margin:0 auto}
+.hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,520px);gap:40px;align-items:center;padding-bottom:36px;border-bottom:1px solid var(--line)}
+.hero h1{font-size:clamp(34px,4.6vw,56px);line-height:1.02;letter-spacing:-.035em}
+.hero h1 em{font-style:normal;color:var(--accent)}
+.hero p{color:var(--muted);font-size:16.5px;max-width:46ch;margin:16px 0 22px}
+.hero-search{display:flex;align-items:center;gap:12px;width:100%;max-width:440px;padding:13px 16px;border-radius:12px;border:1px solid var(--line);background:var(--surface);cursor:pointer;color:var(--muted);font-size:15px;box-shadow:var(--shadow);text-align:left}
+.hero-search:hover{border-color:var(--accent)}
+.hero-search span{flex:1}
+.quick{margin-top:22px;display:flex;flex-direction:column;gap:8px}
+.quick-label{font:600 11px/1 var(--f-body);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.qchips{display:flex;flex-wrap:wrap;gap:6px}
+.qchip{padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);text-decoration:none;font-size:13.5px}
+.qchip:hover{border-color:var(--accent);color:var(--accent)}
+.hero .sci .pad.fn .key{min-height:34px}
+.hero .sci .key{min-height:40px}
+.cats{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px;margin-top:36px}
+.cat{scroll-margin-top:80px}
+.cat-head{display:flex;align-items:baseline;gap:10px;margin-bottom:10px;padding-bottom:10px;border-bottom:2px solid var(--ink)}
+.cat-head h2{font-family:var(--f-display);font-weight:650;font-size:21px;letter-spacing:-.02em;margin:0}
+.cat-head span{font:12px var(--f-mono);color:var(--muted);margin-left:auto}
+.cat-list{list-style:none;margin:0;padding:0}
+.cat-list a{display:block;padding:9px 8px;margin:0 -8px;border-radius:8px;text-decoration:none}
+.cat-list a:hover{background:var(--surface)}
+.cat-list a b{display:block;font-weight:600;font-size:14.5px}
+.cat-list a small{display:block;color:var(--muted);font-size:12.5px;line-height:1.4}
+.cat.flash .cat-head{border-color:var(--accent)}
+.home-foot{margin-top:40px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font-size:13px;display:flex;flex-wrap:wrap;gap:8px 24px}
+
+/* ---------- Conversion / GPA / password ---------- */
+.conv{display:flex;flex-direction:column;gap:20px}
+.conv-cats{display:flex;flex-wrap:wrap;gap:6px}
+.conv-cats button{padding:7px 13px;border-radius:999px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-size:13.5px}
+.conv-cats button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.conv-main{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:12px;align-items:end;padding:20px}
+.conv-main .inp input{font-size:22px;padding:12px}
+.conv-main .inp select{font-size:14px}
+.conv-out{font:600 26px var(--f-mono);padding:10px 12px;border-radius:var(--r-sm);background:var(--accent-soft);color:var(--ink);border:1px solid var(--accent-line);overflow-x:auto;white-space:nowrap}
+.conv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
+.conv-cell{padding:11px 14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);cursor:pointer;text-align:left}
+.conv-cell:hover{border-color:var(--accent-line)}
+.conv-cell.is-to{border-color:var(--accent);background:var(--accent-soft)}
+.conv-cell small{display:block;color:var(--muted);font-size:12px}
+.conv-cell b{font:500 15px var(--f-mono);font-variant-numeric:tabular-nums;word-break:break-all}
+.gpa-rows{display:flex;flex-direction:column;gap:8px}
+.gpa-row{display:grid;grid-template-columns:minmax(0,1fr) 74px 86px 34px;gap:6px;align-items:center}
+.gpa-row .inp input,.gpa-row .inp select{padding:8px 9px;font-size:14px}
+.gpa-row .inp.name input{font-family:var(--f-body)}
+.gpa-head{display:grid;grid-template-columns:minmax(0,1fr) 74px 86px 34px;gap:6px;font-size:12px;color:var(--muted)}
+.del{border:0;background:none;color:var(--muted);cursor:pointer;border-radius:7px;height:34px}
+.del:hover{background:var(--bad-soft);color:var(--bad)}
+.pw-list{display:flex;flex-direction:column;gap:8px}
+.pw{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm)}
+.pw code{flex:1;min-width:0;font:500 15.5px var(--f-mono);word-break:break-all;letter-spacing:.02em}
+.pw.big{background:var(--accent-soft);border-color:var(--accent-line);padding:18px}
+.pw.big code{font-size:clamp(17px,2.4vw,22px)}
+.meter{display:flex;gap:4px;margin-top:8px}
+.meter i{flex:1;height:6px;border-radius:3px;background:var(--surface-2)}
+.frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;line-height:1.05}
+.frac span:first-child{border-bottom:3px solid currentColor;padding:0 6px 2px}
+.frac span:last-child{padding-top:2px}
+
+/* ---------- Palette & toast ---------- */
+.palette{position:fixed;inset:0;z-index:60;background:rgba(10,16,14,.45);display:flex;justify-content:center;align-items:flex-start;padding:12vh 16px 16px}
+.pal-box{width:100%;max-width:580px;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden}
+.pal-in{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line);color:var(--muted)}
+.pal-in input{flex:1;border:0;background:none;outline:none;font-size:17px;color:var(--ink)}
+.pal-list{max-height:min(420px,56vh);overflow-y:auto;padding:6px}
+.pal-group{font:600 11px/1 var(--f-body);letter-spacing:.09em;text-transform:uppercase;color:var(--muted);padding:12px 12px 6px}
+.pal-item{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 12px;border-radius:9px;cursor:pointer;text-decoration:none}
+.pal-item small{color:var(--muted);font-size:12.5px;display:block}
+.pal-item .cat-tag{font-size:11.5px;color:var(--muted);white-space:nowrap}
+.pal-item.sel{background:var(--accent-soft)}
+.pal-empty{padding:24px;color:var(--muted);text-align:center}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;z-index:70;box-shadow:var(--shadow)}
+
+/* ---------- Responsive ---------- */
+@media (max-width:1060px){ .sci-wrap{grid-template-columns:1fr} .hero{grid-template-columns:1fr} }
+@media (max-width:900px){
+  .calc-body{grid-template-columns:1fr}
+  .inputs{position:static}
+  .shell{grid-template-columns:1fr}
+  .menu-btn{display:grid}
+  .sidebar{position:fixed;left:0;top:0;bottom:0;width:280px;height:100%;z-index:50;background:var(--bg);transform:translateX(-100%);transition:transform .2s;padding-top:calc(18px + env(safe-area-inset-top,0px));box-shadow:var(--shadow)}
+  body.nav-open .sidebar{transform:none}
+  body.nav-open .scrim{display:block;position:fixed;inset:0;z-index:40;background:rgba(10,16,14,.4)}
+}
+@media (max-width:600px){
+  .topbar{padding:10px 12px;gap:6px}
+  .search-trigger kbd,.brand-text{display:none}
+  .sci-pads{grid-template-columns:1fr}
+  .conv-main{grid-template-columns:1fr}
+  .conv-main .swap{justify-self:center;transform:rotate(90deg)}
+  .head-actions .btn span{display:none}
+  .hbar{grid-template-columns:90px 1fr auto}
+  .gpa-row,.gpa-head{grid-template-columns:minmax(0,1fr) 58px 76px 30px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<header class="topbar">
+  <button class="icon-btn menu-btn" id="menuBtn" aria-label="Open calculator list"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <a class="brand" href="#home"><span class="brand-mark">=</span><span class="brand-text">Tally</span></a>
+  <button class="search-trigger" id="searchBtn"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span id="searchLabel">Search calculators</span><kbd>/</kbd></button>
+  <button class="icon-btn" id="themeBtn" aria-label="Switch light or dark theme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9Z"/></svg></button>
+</header>
+<div class="shell">
+  <nav class="sidebar" id="sidebar" aria-label="Calculators"></nav>
+  <div class="scrim" id="scrim"></div>
+  <main id="main"></main>
+</div>
+<div class="palette" id="palette" hidden>
+  <div class="pal-box" role="dialog" aria-label="Search calculators">
+    <div class="pal-in"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="palInput" placeholder="Mortgage, BMI, percent…" autocomplete="off" aria-label="Search"><kbd>Esc</kbd></div>
+    <div class="pal-list" id="palList"></div>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(() => {
+'use strict';
+/* ====================== Utilities ====================== */
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const pad = n => String(n).padStart(2, '0');
+const fin = n => typeof n === 'number' && isFinite(n);
+const num = (n, d = 2) => fin(n) ? n.toLocaleString('en-US', {maximumFractionDigits: d}) : '—';
+const money = (n, d = 2) => fin(n) ? (n < 0 ? '−$' : '$') + Math.abs(n).toLocaleString('en-US', {minimumFractionDigits: d, maximumFractionDigits: d}) : '—';
+const money0 = n => money(n, 0);
+const pct = (n, d = 2) => fin(n) ? num(n, d) + '%' : '—';
+const compact = n => new Intl.NumberFormat('en-US', {notation: 'compact', maximumFractionDigits: 1}).format(n);
+const compact$ = n => (n < 0 ? '−$' : '$') + compact(Math.abs(n));
+const toNum = s => { if (typeof s === 'number') return s; const t = String(s ?? '').replace(/[,$\s%]/g, ''); return t === '' ? NaN : Number(t); };
+const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+const sum = a => a.reduce((x, y) => x + y, 0);
+const hms = s => { if (!fin(s)) return '—'; s = Math.round(s); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60; return h ? `${h}:${pad(m)}:${pad(x)}` : `${m}:${pad(x)}`; };
+const todayISO = () => { const t = new Date(); return `${t.getFullYear()}-${pad(t.getMonth() + 1)}-${pad(t.getDate())}`; };
+const D = s => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || ''); return m ? new Date(Date.UTC(+m[1], m[2] - 1, +m[3])) : null; };
+const isoOf = d => `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
+const addDays = (d, n) => new Date(d.getTime() + n * 864e5);
+const addMonths = (d, n) => { const y = d.getUTCFullYear(), m = d.getUTCMonth() + n, day = d.getUTCDate(); const last = new Date(Date.UTC(y, m + 1, 0)).getUTCDate(); return new Date(Date.UTC(y, m, Math.min(day, last))); };
+const fmtDate = (d, wd = true) => d ? d.toLocaleDateString('en-US', {timeZone: 'UTC', weekday: wd ? 'short' : undefined, year: 'numeric', month: 'short', day: 'numeric'}) : '—';
+const fmtMonth = d => d.toLocaleDateString('en-US', {timeZone: 'UTC', year: 'numeric', month: 'short'});
+const daysBetween = (a, b) => Math.round((b - a) / 864e5);
+const shiftISO = n => isoOf(addDays(D(todayISO()), n));
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('tally:' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem('tally:' + k, JSON.stringify(v)); } catch (e) {} }
+};
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => t.hidden = true, 1800); }
+function copyText(text, label = 'Copied') {
+  const done = () => toast(label);
+  try { navigator.clipboard.writeText(text).then(done, () => fallback()); } catch (e) { fallback(); }
+  function fallback() { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); done(); } catch (e) { toast('Select the text to copy it'); } ta.remove(); }
+}
+function ymdDiff(a, b) {
+  let y = b.getUTCFullYear() - a.getUTCFullYear(), m = b.getUTCMonth() - a.getUTCMonth(), d = b.getUTCDate() - a.getUTCDate();
+  if (d < 0) { m--; d += new Date(Date.UTC(b.getUTCFullYear(), b.getUTCMonth(), 0)).getUTCDate(); }
+  if (m < 0) { y--; m += 12; }
+  return {y, m, d};
+}
+const plural = (n, w) => `${num(n, 0)} ${w}${n === 1 ? '' : 's'}`;
+function businessDays(a, b) { // weekdays in [a, b)
+  let sign = 1; if (b < a) { [a, b] = [b, a]; sign = -1; }
+  const total = daysBetween(a, b); const weeks = Math.floor(total / 7); let n = weeks * 5;
+  for (let i = weeks * 7; i < total; i++) { const wd = addDays(a, i).getUTCDay(); if (wd !== 0 && wd !== 6) n++; }
+  return n * sign;
+}
+
+/* ====================== Icons ====================== */
+const I = {
+  star: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9Z"/></svg>',
+  starOn: '<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9Z"/></svg>',
+  copy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg>',
+  reset: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>',
+  swap: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 4 3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"/></svg>',
+  plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  x: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+  dice: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="9" cy="9" r="1" fill="currentColor"/><circle cx="15" cy="15" r="1" fill="currentColor"/><circle cx="15" cy="9" r="1" fill="currentColor"/><circle cx="9" cy="15" r="1" fill="currentColor"/></svg>'
+};
+
+/* ====================== Expression parser ====================== */
+const Expr = (() => {
+  const FNS = ['asinh','acosh','atanh','asin','acos','atan','sinh','cosh','tanh','sin','cos','tan','sqrt','cbrt','abs','exp','ln','log','floor','ceil','round'];
+  const IDS = ['pi','ans','e','x'];
+  const NAMES = [...FNS, ...IDS].sort((a, b) => b.length - a.length);
+  function gamma(z) {
+    if (z < 0.5) return Math.PI / (Math.sin(Math.PI * z) * gamma(1 - z));
+    z -= 1; const c = [0.99999999999980993, 676.5203681218851, -1259.1392167224028, 771.32342877765313, -176.61502916214059, 12.507343278686905, -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7];
+    let x = c[0]; for (let i = 1; i < 9; i++) x += c[i] / (z + i); const t = z + 7.5;
+    return Math.sqrt(2 * Math.PI) * Math.pow(t, z + 0.5) * Math.exp(-t) * x;
+  }
+  function fact(n) { if (n < 0 && Number.isInteger(n)) return NaN; if (Number.isInteger(n) && n <= 170) { let r = 1; for (let i = 2; i <= n; i++) r *= i; return r; } return gamma(n + 1); }
+  const snap = v => Math.abs(v) < 1e-14 ? 0 : v;
+  function applyFn(f, x, s) {
+    const deg = s.__deg, toR = v => deg ? v * Math.PI / 180 : v, fromR = v => deg ? v * 180 / Math.PI : v;
+    switch (f) {
+      case 'sin': return snap(Math.sin(toR(x)));
+      case 'cos': return snap(Math.cos(toR(x)));
+      case 'tan': if (deg && Math.abs(((x - 90) % 180 + 180) % 180) < 1e-12) return NaN; return snap(Math.tan(toR(x)));
+      case 'asin': return fromR(Math.asin(x)); case 'acos': return fromR(Math.acos(x)); case 'atan': return fromR(Math.atan(x));
+      case 'sinh': return Math.sinh(x); case 'cosh': return Math.cosh(x); case 'tanh': return Math.tanh(x);
+      case 'asinh': return Math.asinh(x); case 'acosh': return Math.acosh(x); case 'atanh': return Math.atanh(x);
+      case 'sqrt': return Math.sqrt(x); case 'cbrt': return Math.cbrt(x); case 'abs': return Math.abs(x);
+      case 'exp': return Math.exp(x); case 'ln': return Math.log(x); case 'log': return Math.log10(x);
+      case 'floor': return Math.floor(x); case 'ceil': return Math.ceil(x); case 'round': return Math.round(x);
+    }
+    throw Error('Unknown function ' + f);
+  }
+  function tokenize(src) {
+    let s = src.replace(/×/g, '*').replace(/÷/g, '/').replace(/[−–]/g, '-').replace(/π/g, 'pi').replace(/√/g, 'sqrt').replace(/∛/g, 'cbrt').replace(/\*\*/g, '^').replace(/\s+/g, '');
+    const t = []; let i = 0;
+    while (i < s.length) {
+      const c = s[i];
+      if (/[0-9.]/.test(c)) {
+        const m = /^(\d+\.?\d*|\.\d+)(E[+-]?\d+)?/.exec(s.slice(i));
+        if (!m) throw Error('Misplaced decimal point');
+        t.push({t: 'num', n: parseFloat(m[0])}); i += m[0].length;
+      } else if (/[a-z]/i.test(c)) {
+        const rest = s.slice(i).toLowerCase(); const name = NAMES.find(n => rest.startsWith(n));
+        if (!name) throw Error(`Unknown name “${(/^[a-z]+/i.exec(s.slice(i)) || [c])[0]}”`);
+        t.push({t: FNS.includes(name) ? 'fn' : 'id', v: name}); i += name.length;
+      } else if ('+-*/^()!%'.includes(c)) { t.push({t: 'op', v: c}); i++; }
+      else throw Error(`Unexpected “${c}”`);
+    }
+    return t;
+  }
+  function compile(src) {
+    const open = (src.match(/\(/g) || []).length - (src.match(/\)/g) || []).length;
+    const tokens = tokenize(src + ')'.repeat(Math.max(0, open)));
+    if (!tokens.length) throw Error('Empty expression');
+    let p = 0;
+    const peek = () => tokens[p], next = () => tokens[p++];
+    const isOp = (t, v) => t && t.t === 'op' && t.v === v;
+    const startsFactor = t => t && (t.t === 'num' || t.t === 'id' || t.t === 'fn' || isOp(t, '('));
+    const expect = v => { const t = next(); if (!isOp(t, v)) throw Error(`Expected “${v}”`); };
+    function expr() { let l = term(); while (isOp(peek(), '+') || isOp(peek(), '-')) { const op = next().v, r = term(), a = l; l = op === '+' ? s => a(s) + r(s) : s => a(s) - r(s); } return l; }
+    function term() {
+      let l = unary();
+      for (;;) {
+        const t = peek();
+        if (isOp(t, '*') || isOp(t, '/')) { next(); const r = unary(), a = l; l = t.v === '*' ? s => a(s) * r(s) : s => a(s) / r(s); }
+        else if (startsFactor(t)) { const r = power(), a = l; l = s => a(s) * r(s); }
+        else return l;
+      }
+    }
+    function unary() { const t = peek(); if (isOp(t, '-')) { next(); const a = unary(); return s => -a(s); } if (isOp(t, '+')) { next(); return unary(); } return power(); }
+    function power() { const b = postfix(); if (isOp(peek(), '^')) { next(); const e = unary(); return s => Math.pow(b(s), e(s)); } return b; }
+    function postfix() { let a = primary(); while (isOp(peek(), '!') || isOp(peek(), '%')) { const op = next().v, b = a; a = op === '!' ? s => fact(b(s)) : s => b(s) / 100; } return a; }
+    function primary() {
+      const t = next(); if (!t) throw Error('Expression is incomplete');
+      if (t.t === 'num') { const v = t.n; return () => v; }
+      if (t.t === 'id') {
+        if (t.v === 'pi') return () => Math.PI; if (t.v === 'e') return () => Math.E;
+        const name = t.v; return s => { if (!(name in s)) throw Error(`“${name}” has no value here`); return s[name]; };
+      }
+      if (t.t === 'fn') { let arg; if (isOp(peek(), '(')) { next(); arg = expr(); expect(')'); } else arg = power(); const f = t.v; return s => applyFn(f, arg(s), s); }
+      if (isOp(t, '(')) { const a = expr(); expect(')'); return a; }
+      throw Error(`Unexpected “${t.v}”`);
+    }
+    const f = expr();
+    if (p < tokens.length) throw Error(`Unexpected “${tokens[p].v ?? tokens[p].n}”`);
+    return f;
+  }
+  return {compile, evaluate: (src, scope = {}) => compile(src)(scope)};
+})();
+
+/* ====================== Charts ====================== */
+function niceTicks(min, max, count = 5) {
+  if (!fin(min) || !fin(max)) return [0, 1];
+  if (min === max) { min -= 1; max += 1; }
+  const span = max - min; let step = Math.pow(10, Math.floor(Math.log10(span / count))); const err = span / count / step;
+  if (err >= 7.5) step *= 10; else if (err >= 3.5) step *= 5; else if (err >= 1.5) step *= 2;
+  const lo = Math.floor(min / step + 1e-9) * step, hi = Math.ceil(max / step - 1e-9) * step, t = [];
+  for (let v = lo; v <= hi + step / 2; v += step) t.push(+v.toFixed(10));
+  return t;
+}
+const legendHTML = items => `<div class="legend">${items.map(s => `<span><i style="background:${s.color}"></i>${esc(s.name)}</span>`).join('')}</div>`;
+
+function lineChart(el, ch) {
+  const W = 640, H = ch.h || 250, L = 58, R = 14, T = 12, B = 28, n = ch.x.length, series = ch.series;
+  const st = series.map(s => s.data.slice());
+  if (ch.stacked) for (let i = 1; i < st.length; i++) for (let j = 0; j < n; j++) st[i][j] += st[i - 1][j];
+  const vals = st.flat().filter(fin);
+  const ticks = niceTicks(Math.min(0, ...vals), Math.max(...vals, 1), 4); const ymin = ticks[0], ymax = ticks[ticks.length - 1];
+  const X = i => L + (n <= 1 ? 0 : i / (n - 1)) * (W - L - R), Y = v => T + (1 - (v - ymin) / (ymax - ymin)) * (H - T - B);
+  const yf = ch.yFmt || compact;
+  let g = '';
+  ticks.forEach(t => g += `<line x1="${L}" x2="${W - R}" y1="${Y(t)}" y2="${Y(t)}" class="grid"/><text x="${L - 8}" y="${Y(t) + 4}" class="tick" text-anchor="end">${yf(t)}</text>`);
+  const sx = Math.max(1, Math.ceil(n / 8));
+  for (let i = 0; i < n; i += sx) g += `<text x="${X(i)}" y="${H - 8}" class="tick" text-anchor="middle">${esc(ch.x[i])}</text>`;
+  for (let k = series.length - 1; k >= 0; k--) {
+    const s = series[k], d = st[k], pts = d.map((v, i) => `${X(i).toFixed(1)},${Y(v).toFixed(1)}`);
+    if (s.area || ch.stacked) {
+      let path = 'M' + pts.join('L'); const base = ch.stacked && k > 0 ? st[k - 1] : null;
+      if (base) for (let i = n - 1; i >= 0; i--) path += `L${X(i).toFixed(1)},${Y(base[i]).toFixed(1)}`;
+      else path += `L${X(n - 1)},${Y(Math.max(0, ymin))}L${X(0)},${Y(Math.max(0, ymin))}`;
+      g += `<path d="${path}Z" style="fill:${s.color};opacity:${ch.stacked ? .28 : .14}"/>`;
+    }
+    g += `<polyline points="${pts.join(' ')}" style="fill:none;stroke:${s.color};stroke-width:2.2;stroke-linejoin:round;${s.dash ? 'stroke-dasharray:6 5' : ''}"/>`;
+  }
+  const dots = series.map(s => `<circle r="4.5" class="hd" style="fill:${s.color};stroke:var(--surface);stroke-width:2" cx="-20" cy="-20"/>`).join('');
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" class="chart-svg" role="img" aria-label="${esc(ch.title || 'Line chart')}">${g}<line class="hover-line" y1="${T}" y2="${H - B}" x1="-20" x2="-20"/>${dots}<rect x="${L}" y="${T}" width="${W - L - R}" height="${H - T - B}" fill="transparent" class="hit"/></svg><div class="tip" hidden></div>` + (series.length > 1 || ch.legend ? legendHTML(series) : '');
+  const svg = $('svg', el), tip = $('.tip', el), line = $('.hover-line', el), cs = $$('.hd', el), fmt = ch.tipFmt || yf;
+  const move = e => {
+    const r = svg.getBoundingClientRect(), x = (e.clientX - r.left) / r.width * W;
+    const i = clamp(Math.round((x - L) / (W - L - R) * (n - 1)), 0, n - 1);
+    line.setAttribute('x1', X(i)); line.setAttribute('x2', X(i));
+    cs.forEach((c, k) => { c.setAttribute('cx', X(i)); c.setAttribute('cy', Y(st[k][i])); });
+    tip.innerHTML = `<div>${esc(ch.xName ? ch.xName + ' ' : '')}${esc(ch.x[i])}</div>` + series.map(s => `<div><span class="sw" style="background:${s.color}"></span>${esc(s.name)}: <b>${fmt(s.data[i])}</b></div>`).join('');
+    tip.hidden = false; const px = X(i) / W * r.width, py = Y(st[st.length - 1][i]) / H * r.height;
+    tip.style.left = (px > r.width / 2 ? px - tip.offsetWidth - 14 : px + 14) + 'px';
+    tip.style.top = clamp(py - 20, 0, r.height - tip.offsetHeight) + 'px';
+  };
+  const leave = () => { tip.hidden = true; line.setAttribute('x1', -20); line.setAttribute('x2', -20); cs.forEach(c => c.setAttribute('cx', -20)); };
+  svg.addEventListener('pointermove', move); svg.addEventListener('pointerleave', leave);
+}
+
+function donutChart(el, ch) {
+  const data = ch.data.filter(d => d.value > 0), total = sum(data.map(d => d.value)), R = 62, C = 2 * Math.PI * R, f = ch.fmt || money;
+  let acc = 0, arcs = '';
+  data.forEach(d => { const len = d.value / total * C; arcs += `<circle cx="85" cy="85" r="${R}" style="fill:none;stroke:${d.color};stroke-width:24" stroke-dasharray="${Math.max(0, len - 1.5)} ${C}" stroke-dashoffset="${-acc}" transform="rotate(-90 85 85)"/>`; acc += len; });
+  el.innerHTML = `<div class="donut-wrap"><svg viewBox="0 0 170 170" role="img" aria-label="${esc(ch.title || 'Breakdown')}"><circle cx="85" cy="85" r="${R}" style="fill:none;stroke:var(--surface-2);stroke-width:24"/>${arcs}
+    <text x="85" y="80" text-anchor="middle" class="tick">${esc(ch.centerLabel || 'Total')}</text><text x="85" y="100" text-anchor="middle" style="fill:var(--ink);font:600 16px var(--f-mono)">${ch.center || f(total)}</text></svg>
+    <div class="donut-legend">${data.map(d => `<div class="dl-row"><i style="background:${d.color}"></i><span>${esc(d.label)}</span><b>${f(d.value)}</b><em>${num(d.value / total * 100, 1)}%</em></div>`).join('')}</div></div>`;
+}
+
+function gaugeChart(el, ch) {
+  const W = 640, H = 78, L = 6, R = 6, X = v => L + (clamp(v, ch.min, ch.max) - ch.min) / (ch.max - ch.min) * (W - L - R);
+  let g = '', from = ch.min;
+  ch.bands.forEach((b, i) => {
+    const x1 = X(from), x2 = X(b.to);
+    g += `<rect x="${x1 + (i ? 1.5 : 0)}" y="26" width="${Math.max(0, x2 - x1 - (i ? 1.5 : 0))}" height="14" rx="3" style="fill:${b.color};opacity:.85"/>`;
+    g += `<text x="${(x1 + x2) / 2}" y="60" text-anchor="middle" class="tick">${esc(b.label)}</text>`;
+    if (i < ch.bands.length - 1) g += `<text x="${x2}" y="74" text-anchor="middle" class="tick" style="opacity:.75">${b.to}</text>`;
+    from = b.to;
+  });
+  const vx = X(ch.value);
+  g += `<path d="M${vx - 7},6 L${vx + 7},6 L${vx},20 Z" style="fill:var(--ink)"/><line x1="${vx}" x2="${vx}" y1="20" y2="44" style="stroke:var(--ink);stroke-width:2.5"/>`;
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" class="chart-svg" role="img" aria-label="${esc(ch.title || 'Scale')}">${g}</svg>`;
+}
+
+function barChart(el, ch) {
+  const W = 640, H = ch.h || 220, L = 40, R = 10, T = 10, B = 30, n = ch.data.length;
+  const ticks = niceTicks(0, Math.max(...ch.data, 1), 4), ymax = ticks[ticks.length - 1];
+  const bw = (W - L - R) / n, Y = v => T + (1 - v / ymax) * (H - T - B);
+  let g = '';
+  ticks.forEach(t => g += `<line x1="${L}" x2="${W - R}" y1="${Y(t)}" y2="${Y(t)}" class="grid"/><text x="${L - 7}" y="${Y(t) + 4}" class="tick" text-anchor="end">${compact(t)}</text>`);
+  ch.data.forEach((v, i) => {
+    g += `<rect x="${L + i * bw + 2}" y="${Y(v)}" width="${Math.max(1, bw - 4)}" height="${H - B - Y(v)}" rx="3" style="fill:${ch.color || 'var(--c1)'}"><title>${esc(ch.x[i])}: ${v}</title></rect>`;
+    if (n <= 14 || i % Math.ceil(n / 10) === 0) g += `<text x="${L + i * bw + bw / 2}" y="${H - 10}" class="tick" text-anchor="middle">${esc(ch.x[i])}</text>`;
+  });
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" class="chart-svg" role="img" aria-label="${esc(ch.title || 'Bar chart')}">${g}</svg>`;
+}
+
+function plotChart(el, ch) {
+  const W = 640, H = ch.h || 360, L = 46, R = 12, T = 12, B = 28, N = 600;
+  let {xmin, xmax} = ch; if (!(xmax > xmin)) { xmin = -10; xmax = 10; }
+  const xs = Array.from({length: N + 1}, (_, i) => xmin + (xmax - xmin) * i / N);
+  const evalF = (fn, x) => { try { const y = fn.f(x); return fin(y) ? y : NaN; } catch (e) { return NaN; } };
+  const ys = ch.fns.map(fn => xs.map(x => evalF(fn, x)));
+  let ymin, ymax;
+  const all = ys.flat().filter(fin).sort((a, b) => a - b);
+  (ch.points || []).forEach(p => fin(p.y) && all.push(p.y));
+  if (!all.length) { ymin = -10; ymax = 10; } else {
+    all.sort((a, b) => a - b);
+    const lo = all[Math.floor(all.length * .02)], hi = all[Math.max(0, Math.ceil(all.length * .98) - 1)], p2 = (hi - lo) * .12 || 1;
+    ymin = lo - p2; ymax = hi + p2;
+  }
+  const yt = niceTicks(ymin, ymax, 6); ymin = yt[0]; ymax = yt[yt.length - 1];
+  const xt = niceTicks(xmin, xmax, 8).filter(t => t >= xmin - 1e-9 && t <= xmax + 1e-9);
+  const X = x => L + (x - xmin) / (xmax - xmin) * (W - L - R), Y = y => T + (1 - (y - ymin) / (ymax - ymin)) * (H - T - B);
+  const cid = 'clip' + Math.random().toString(36).slice(2, 8);
+  let g = `<defs><clipPath id="${cid}"><rect x="${L}" y="${T}" width="${W - L - R}" height="${H - T - B}"/></clipPath></defs>`;
+  yt.forEach(t => g += `<line x1="${L}" x2="${W - R}" y1="${Y(t)}" y2="${Y(t)}" class="grid"/><text x="${L - 7}" y="${Y(t) + 4}" class="tick" text-anchor="end">${num(t, 4)}</text>`);
+  xt.forEach(t => g += `<line y1="${T}" y2="${H - B}" x1="${X(t)}" x2="${X(t)}" class="grid"/><text x="${X(t)}" y="${H - 9}" class="tick" text-anchor="middle">${num(t, 4)}</text>`);
+  if (ymin < 0 && ymax > 0) g += `<line x1="${L}" x2="${W - R}" y1="${Y(0)}" y2="${Y(0)}" class="axis"/>`;
+  if (xmin < 0 && xmax > 0) g += `<line y1="${T}" y2="${H - B}" x1="${X(0)}" x2="${X(0)}" class="axis"/>`;
+  const span = ymax - ymin;
+  ch.fns.forEach((fn, k) => {
+    let d = '', pen = false, prev = 0;
+    ys[k].forEach((y, i) => {
+      if (!fin(y) || y < ymin - span * 3 || y > ymax + span * 3) { pen = false; return; }
+      if (pen && Math.abs(y - prev) > span * 1.2) pen = false;
+      d += (pen ? 'L' : 'M') + X(xs[i]).toFixed(1) + ',' + Y(y).toFixed(1); pen = true; prev = y;
+    });
+    g += `<path d="${d}" clip-path="url(#${cid})" style="fill:none;stroke:${fn.color};stroke-width:2.4;stroke-linejoin:round"/>`;
+  });
+  (ch.points || []).forEach(p => { if (!fin(p.x) || !fin(p.y) || p.y < ymin || p.y > ymax || p.x < xmin || p.x > xmax) return; g += `<circle cx="${X(p.x)}" cy="${Y(p.y)}" r="5" style="fill:var(--surface);stroke:${p.color || 'var(--ink)'};stroke-width:2.2"/>` + (p.label ? `<text x="${X(p.x) + 8}" y="${Y(p.y) - 8}" class="lbl" style="font-size:11px">${esc(p.label)}</text>` : ''); });
+  const dots = ch.fns.map(fn => `<circle r="4.5" class="hd" style="fill:${fn.color};stroke:var(--surface);stroke-width:2" cx="-20" cy="-20"/>`).join('');
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" class="chart-svg" role="img" aria-label="Function plot">${g}<line class="hover-line" y1="${T}" y2="${H - B}" x1="-20" x2="-20"/>${dots}<rect x="${L}" y="${T}" width="${W - L - R}" height="${H - T - B}" fill="transparent"/></svg><div class="tip" hidden></div>` + legendHTML(ch.fns.map(f => ({name: f.label, color: f.color})));
+  const svg = $('svg', el), tip = $('.tip', el), line = $('.hover-line', el), cs = $$('.hd', el);
+  svg.addEventListener('pointermove', e => {
+    const r = svg.getBoundingClientRect(), vx = (e.clientX - r.left) / r.width * W; if (vx < L || vx > W - R) return;
+    const x = xmin + (vx - L) / (W - L - R) * (xmax - xmin);
+    line.setAttribute('x1', vx); line.setAttribute('x2', vx);
+    let rows = `<div>x = <b>${num(x, 4)}</b></div>`;
+    ch.fns.forEach((fn, k) => { const y = evalF(fn, x); cs[k].setAttribute('cx', fin(y) && y >= ymin && y <= ymax ? vx : -20); cs[k].setAttribute('cy', fin(y) ? Y(y) : -20); rows += `<div><span class="sw" style="background:${fn.color}"></span>${esc(fn.label)} = <b>${fin(y) ? num(y, 5) : 'undefined'}</b></div>`; });
+    tip.innerHTML = rows; tip.hidden = false; const px = vx / W * r.width;
+    tip.style.left = (px > r.width / 2 ? px - tip.offsetWidth - 14 : px + 14) + 'px'; tip.style.top = '10px';
+  });
+  svg.addEventListener('pointerleave', () => { tip.hidden = true; line.setAttribute('x1', -20); line.setAttribute('x2', -20); cs.forEach(c => c.setAttribute('cx', -20)); });
+}
+
+function hbarsHTML(items, fmt = v => num(v, 1)) {
+  const max = Math.max(...items.map(i => i.value), 1e-9);
+  return `<div class="hbars">${items.map(i => `<div class="hbar"><span>${esc(i.label)}</span><div class="track"><div class="fill" style="width:${clamp(i.value / max * 100, 0, 100)}%;background:${i.color || 'var(--accent)'}"></div></div><b>${i.text ?? fmt(i.value)}</b></div>`).join('')}</div>`;
+}
+
+function mountChart(el, ch) {
+  ({line: lineChart, donut: donutChart, gauge: gaugeChart, bars: barChart, plot: plotChart}[ch.type] || ((e, c) => e.innerHTML = c.html || ''))(el, ch);
+}
+
+/* ====================== Shared field presets ====================== */
+const isM = v => v.units === 'metric';
+const UNITS = {id: 'units', label: 'Units', type: 'seg', shared: 'units', value: 'imperial', options: [['imperial', 'US'], ['metric', 'Metric']], effect: convertUnits};
+const HEIGHT = [
+  {id: 'hcm', label: 'Height', type: 'num', suffix: 'cm', value: 178, show: isM, shared: 'hcm'},
+  {type: 'row', fields: [
+    {id: 'hft', label: 'Height', type: 'num', suffix: 'ft', value: 5, show: v => !isM(v), shared: 'hft'},
+    {id: 'hin', label: ' ', err: 'Height (inches)', type: 'num', suffix: 'in', value: 10, show: v => !isM(v), shared: 'hin'}]}
+];
+const WEIGHT = [
+  {id: 'wkg', label: 'Weight', type: 'num', suffix: 'kg', value: 77, show: isM, shared: 'wkg'},
+  {id: 'wlb', label: 'Weight', type: 'num', suffix: 'lb', value: 170, show: v => !isM(v), shared: 'wlb'}
+];
+const SEX = {id: 'sex', label: 'Sex', type: 'seg', shared: 'sex', value: 'male', options: [['male', 'Male'], ['female', 'Female']]};
+const AGE = {id: 'age', label: 'Age', type: 'num', suffix: 'years', value: 35, shared: 'age'};
+const hCm = v => isM(v) ? v.hcm : (v.hft * 12 + v.hin) * 2.54;
+const wKg = v => isM(v) ? v.wkg : v.wlb * 0.45359237;
+const showW = (kg, v) => isM(v) ? num(kg, 1) + ' kg' : num(kg / 0.45359237, 1) + ' lb';
+function convertUnits(r, calc) {
+  const toMetric = r.units === 'metric', R1 = x => Math.round(x * 10) / 10;
+  if ('hcm' in r) {
+    if (toMetric) r.hcm = Math.round((toNum(r.hft) * 12 + toNum(r.hin)) * 2.54) || r.hcm;
+    else { const inch = toNum(r.hcm) / 2.54; if (fin(inch)) { let ft = Math.floor(inch / 12), i = Math.round(inch - ft * 12); if (i === 12) { ft++; i = 0; } r.hft = ft; r.hin = i; } }
+  }
+  if ('wkg' in r) { if (toMetric) r.wkg = R1(toNum(r.wlb) * 0.45359237) || r.wkg; else r.wlb = R1(toNum(r.wkg) / 0.45359237) || r.wlb; }
+  walk(calc.fields, f => { if (f.conv === 'len' && fin(toNum(r[f.id]))) r[f.id] = R1(toNum(r[f.id]) * (toMetric ? 2.54 : 1 / 2.54)); });
+}
+const unitSfx = (m, i) => v => isM(v) ? m : i;
+
+/* ====================== Finance helpers ====================== */
+const pmt = (P, r, n) => r ? P * r / (1 - Math.pow(1 + r, -n)) : P / n;
+function amortize(P, r, n, extra = 0) {
+  const pay = pmt(P, r, n); let bal = P, months = 0, totalInt = 0, yp = 0, yi = 0; const years = [];
+  while (bal > 0.005 && months < n) {
+    const int = bal * r, prin = Math.min(bal, pay - int + extra);
+    bal -= prin; totalInt += int; yp += prin; yi += int; months++;
+    if (months % 12 === 0 || bal <= 0.005) { years.push({p: yp, i: yi, bal: Math.max(0, bal)}); yp = yi = 0; }
+  }
+  return {pay, months, totalInt, years};
+}
+const durYM = m => { const y = Math.floor(m / 12), mm = m % 12; return [y ? plural(y, 'year') : '', mm ? plural(mm, 'month') : ''].filter(Boolean).join(' ') || '0 months'; };
+
+/* ====================== Calculators ====================== */
+const CATS = [
+  {id: 'finance', name: 'Financial', color: 'var(--c1)', blurb: 'Loans, savings, pay and tax'},
+  {id: 'health', name: 'Fitness & Health', color: 'var(--c4)', blurb: 'Body, energy and training'},
+  {id: 'math', name: 'Math', color: 'var(--c3)', blurb: 'Expressions, graphs and statistics'},
+  {id: 'other', name: 'Everyday', color: 'var(--c2)', blurb: 'Dates, time, units and more'}
+];
+
+const CALCS = [
+/* ---------- FINANCE ---------- */
+{ id: 'mortgage', name: 'Mortgage', cat: 'finance', kw: 'home house loan payment amortization pmi escrow',
+  desc: 'Monthly payment with taxes, insurance, HOA and PMI, plus what extra payments save you.',
+  fields: [
+    {id: 'price', label: 'Home price', type: 'num', prefix: '$', value: 450000},
+    {id: 'down', label: 'Down payment', type: 'num', suffix: '%', value: 20, range: [0, 50, 1]},
+    {type: 'row', fields: [
+      {id: 'rate', label: 'Interest rate', type: 'num', suffix: '%', value: 6.4},
+      {id: 'term', label: 'Loan term', type: 'select', value: '30', options: [['10', '10 years'], ['15', '15 years'], ['20', '20 years'], ['25', '25 years'], ['30', '30 years'], ['40', '40 years']]}]},
+    {id: 'start', label: 'First payment', type: 'date', value: () => todayISO().slice(0, 8) + '01'},
+    {type: 'row', fields: [
+      {id: 'tax', label: 'Property tax', type: 'num', suffix: '%/yr', value: 1.1},
+      {id: 'ins', label: 'Insurance', type: 'num', prefix: '$', suffix: '/yr', value: 1800}]},
+    {type: 'row', fields: [
+      {id: 'hoa', label: 'HOA', type: 'num', prefix: '$', suffix: '/mo', value: 0},
+      {id: 'pmi', label: 'PMI', type: 'num', suffix: '%/yr', value: 0.5, hint: 'Applied under 20% down'}]},
+    {id: 'extra', label: 'Extra principal', type: 'num', prefix: '$', suffix: '/mo', value: 200}
+  ],
+  formula: 'Principal and interest use <code>M = P·r / (1 − (1 + r)<sup>−n</sup>)</code>, where P is the loan amount, r the monthly rate (annual ÷ 12) and n the number of monthly payments. Extra principal is applied each month and shortens the loan.',
+  compute(v) {
+    const loan = v.price * (1 - v.down / 100), n = +v.term * 12, r = v.rate / 1200;
+    if (loan <= 0) return {error: 'The down payment covers the full price, so there is no loan to calculate.'};
+    const base = amortize(loan, r, n), xa = amortize(loan, r, n, Math.max(0, v.extra));
+    const tax = v.price * v.tax / 1200, ins = v.ins / 12, hoa = v.hoa, pmi = v.down < 20 ? loan * v.pmi / 1200 : 0;
+    const total = base.pay + tax + ins + hoa + pmi + Math.max(0, v.extra);
+    const start = D(v.start) || D(todayISO()), payoff = addMonths(start, xa.months - 1);
+    const yrs = +v.term, xLab = Array.from({length: yrs + 1}, (_, i) => String(start.getUTCFullYear() + i));
+    const balA = [loan, ...base.years.map(y => y.bal)], balB = [loan, ...xa.years.map(y => y.bal)];
+    while (balA.length < yrs + 1) balA.push(0); while (balB.length < yrs + 1) balB.push(0);
+    const series = [{name: 'Standard schedule', data: balA, color: 'var(--c3)', dash: v.extra > 0}];
+    if (v.extra > 0) series.push({name: `With $${num(v.extra, 0)}/mo extra`, data: balB, color: 'var(--c1)', area: true});
+    else series[0].area = true;
+    const saved = base.totalInt - xa.totalInt;
+    return {
+      primary: {label: 'Monthly payment', value: money(total), sub: `Loan of ${money0(loan)} · paid off ${fmtMonth(payoff)}`},
+      stats: [
+        {label: 'Total interest', value: money0(xa.totalInt)},
+        {label: 'Total of all payments', value: money0(loan + xa.totalInt)},
+        v.extra > 0 ? {label: 'Interest saved by extra', value: money0(saved), tone: 'good'} : {label: 'Down payment', value: money0(v.price * v.down / 100)},
+        v.extra > 0 ? {label: 'Time saved', value: durYM(n - xa.months), tone: 'good'} : {label: 'Payoff', value: durYM(xa.months)}
+      ],
+      charts: [
+        {type: 'donut', title: 'Monthly payment breakdown', centerLabel: 'per month', data: [
+          {label: 'Principal & interest', value: base.pay, color: 'var(--c1)'}, {label: 'Extra principal', value: Math.max(0, v.extra), color: 'var(--c5)'},
+          {label: 'Property tax', value: tax, color: 'var(--c2)'}, {label: 'Insurance', value: ins, color: 'var(--c3)'},
+          {label: 'HOA', value: hoa, color: 'var(--c4)'}, {label: 'PMI', value: pmi, color: 'var(--muted)'}]},
+        {type: 'line', title: 'Loan balance', heading: 'Remaining balance', x: xLab, xName: 'Year', series, yFmt: compact$, tipFmt: money0}
+      ],
+      table: {title: 'Yearly amortization schedule', head: ['Year', 'Principal', 'Interest', 'Balance'], rows: xa.years.map((y, i) => [start.getUTCFullYear() + i, money0(y.p), money0(y.i), money0(y.bal)])}
+    };
+  }},
+{ id: 'loan', name: 'Loan', cat: 'finance', kw: 'auto car personal student payment amortization',
+  desc: 'Payment, total interest and payoff schedule for any fixed-rate loan: auto, personal or student.',
+  fields: [
+    {id: 'amount', label: 'Loan amount', type: 'num', prefix: '$', value: 32000},
+    {type: 'row', fields: [
+      {id: 'rate', label: 'Interest rate', type: 'num', suffix: '%', value: 7.2},
+      {id: 'years', label: 'Term', type: 'num', suffix: 'years', value: 5}]},
+    {id: 'fee', label: 'Upfront fees', type: 'num', prefix: '$', value: 0, hint: 'Origination or dealer fees, used for the effective APR'},
+    {id: 'extra', label: 'Extra payment', type: 'num', prefix: '$', suffix: '/mo', value: 0}
+  ],
+  formula: 'Payment <code>M = P·r / (1 − (1 + r)<sup>−n</sup>)</code>. Effective APR solves for the rate at which the payments repay the amount actually received (loan minus fees).',
+  compute(v) {
+    const n = Math.round(v.years * 12), r = v.rate / 1200;
+    if (n < 1 || v.amount <= 0) return {error: 'Enter a loan amount and a term of at least one month.'};
+    const a = amortize(v.amount, r, n, Math.max(0, v.extra));
+    let apr = v.rate;
+    if (v.fee > 0) { let lo = 0, hi = 2; const net = v.amount - v.fee; for (let i = 0; i < 80; i++) { const m = (lo + hi) / 2, pv = m ? a.pay * (1 - Math.pow(1 + m / 12, -n)) / (m / 12) : a.pay * n; pv > net ? lo = m : hi = m; } apr = (lo + hi) / 2 * 100; }
+    const bal = [v.amount, ...a.years.map(y => y.bal)];
+    return {
+      primary: {label: 'Monthly payment', value: money(a.pay + Math.max(0, v.extra)), sub: `${a.months} payments · ${durYM(a.months)}`},
+      stats: [{label: 'Total interest', value: money(a.totalInt)}, {label: 'Total paid', value: money(v.amount + a.totalInt + v.fee)}, {label: 'Effective APR', value: pct(apr, 3)}, {label: 'Interest share', value: pct(a.totalInt / (v.amount + a.totalInt) * 100, 1)}],
+      charts: [
+        {type: 'donut', title: 'Principal vs interest', centerLabel: 'total cost', data: [{label: 'Principal', value: v.amount, color: 'var(--c1)'}, {label: 'Interest', value: a.totalInt, color: 'var(--c2)'}, {label: 'Fees', value: v.fee, color: 'var(--c4)'}]},
+        {type: 'line', heading: 'Remaining balance', x: bal.map((_, i) => 'Yr ' + i), series: [{name: 'Balance', data: bal, color: 'var(--c1)', area: true}], yFmt: compact$, tipFmt: money0}
+      ],
+      table: {title: 'Yearly schedule', head: ['Year', 'Principal', 'Interest', 'Balance'], rows: a.years.map((y, i) => [i + 1, money(y.p), money(y.i), money(y.bal)])}
+    };
+  }},
+{ id: 'compound', name: 'Compound Interest', cat: 'finance', kw: 'investment savings growth future value interest',
+  desc: 'Grow a starting balance with regular contributions, rising deposits and inflation-adjusted results.',
+  fields: [
+    {id: 'initial', label: 'Starting balance', type: 'num', prefix: '$', value: 10000},
+    {type: 'row', fields: [
+      {id: 'contrib', label: 'Contribution', type: 'num', prefix: '$', value: 500},
+      {id: 'freq', label: 'Every', type: 'select', value: 'monthly', options: [['monthly', 'Month'], ['annual', 'Year']]}]},
+    {id: 'rate', label: 'Annual return', type: 'num', suffix: '%', value: 7, range: [0, 15, 0.1]},
+    {id: 'years', label: 'Years', type: 'num', suffix: 'years', value: 25, range: [1, 50, 1]},
+    {id: 'comp', label: 'Compounding', type: 'seg', value: 'monthly', options: [['annually', 'Yearly'], ['quarterly', 'Quarterly'], ['monthly', 'Monthly'], ['daily', 'Daily']]},
+    {type: 'row', fields: [
+      {id: 'raise', label: 'Raise deposits', type: 'num', suffix: '%/yr', value: 2},
+      {id: 'infl', label: 'Inflation', type: 'num', suffix: '%/yr', value: 2.5}]}
+  ],
+  formula: 'Each month the balance grows by <code>(1 + r/k)<sup>k/12</sup> − 1</code>, where k is the number of compounding periods per year. Deposits are added at the end of each period and rise by the chosen percentage every year. Real value divides by <code>(1 + inflation)<sup>years</sup></code>.',
+  compute(v) {
+    const k = {annually: 1, quarterly: 4, monthly: 12, daily: 365}[v.comp], mr = Math.pow(1 + v.rate / 100 / k, k / 12) - 1, months = Math.round(v.years * 12);
+    if (months < 1) return {error: 'Enter at least one month.'};
+    let bal = v.initial, put = v.initial; const X = ['0'], C = [v.initial], G = [0], rows = [];
+    for (let m = 1; m <= months; m++) {
+      const yi = Math.floor((m - 1) / 12), dep = v.contrib * Math.pow(1 + v.raise / 100, yi);
+      bal *= 1 + mr;
+      if (v.freq === 'monthly') { bal += dep; put += dep; } else if (m % 12 === 0) { bal += dep; put += dep; }
+      if (m % 12 === 0 || m === months) { X.push(String(Math.ceil(m / 12))); C.push(put); G.push(bal - put); rows.push([Math.ceil(m / 12), money0(put), money0(bal - put), money0(bal), money0(bal / Math.pow(1 + v.infl / 100, m / 12))]); }
+    }
+    const real = bal / Math.pow(1 + v.infl / 100, months / 12);
+    return {
+      primary: {label: `Balance after ${num(v.years, 1)} years`, value: money0(bal), sub: `Worth ${money0(real)} in today's dollars at ${pct(v.infl, 1)} inflation`},
+      stats: [{label: 'Total deposited', value: money0(put)}, {label: 'Interest earned', value: money0(bal - put), tone: 'good'}, {label: 'Growth multiple', value: num(bal / Math.max(put, 1), 2) + '×'}, {label: 'Effective annual rate', value: pct((Math.pow(1 + mr, 12) - 1) * 100, 3)}],
+      charts: [{type: 'line', stacked: true, heading: 'Deposits vs. growth', x: X, xName: 'Year', series: [{name: 'Deposits', data: C, color: 'var(--c3)'}, {name: 'Interest', data: G, color: 'var(--c1)'}], yFmt: compact$, tipFmt: money0}],
+      table: {title: 'Year-by-year growth', head: ['Year', 'Deposited', 'Interest', 'Balance', "Today's $"], rows}
+    };
+  }},
+{ id: 'retirement', name: 'Retirement', cat: 'finance', kw: 'nest egg 401k ira pension savings plan',
+  desc: 'Will your savings last? Projects your nest egg, what you need, and the income it can sustain.',
+  fields: [
+    {type: 'row', fields: [
+      {id: 'age', label: 'Current age', type: 'num', value: 35},
+      {id: 'retire', label: 'Retire at', type: 'num', value: 65},
+      {id: 'life', label: 'Plan to', type: 'num', value: 92}]},
+    {id: 'saved', label: 'Saved so far', type: 'num', prefix: '$', value: 85000},
+    {id: 'contrib', label: 'Monthly saving', type: 'num', prefix: '$', value: 1200},
+    {type: 'row', fields: [
+      {id: 'pre', label: 'Return before', type: 'num', suffix: '%', value: 7},
+      {id: 'post', label: 'Return after', type: 'num', suffix: '%', value: 5}]},
+    {id: 'income', label: 'Income needed in retirement', type: 'num', prefix: '$', suffix: '/yr', value: 70000, hint: "In today's dollars"},
+    {id: 'other', label: 'Social Security & pensions', type: 'num', prefix: '$', suffix: '/yr', value: 24000},
+    {id: 'infl', label: 'Inflation', type: 'num', suffix: '%', value: 2.8}
+  ],
+  formula: 'Savings grow monthly until retirement. Each retirement year withdraws the shortfall (income need minus other income), raised by inflation, before returns are applied. The required nest egg is the present value of those withdrawals.',
+  compute(v) {
+    const yrs = v.retire - v.age, ret = v.life - v.retire;
+    if (yrs <= 0 || ret <= 0) return {error: 'Retirement age should fall between your current age and the age you plan to.'};
+    let bal = v.saved; const mr = Math.pow(1 + v.pre / 100, 1 / 12) - 1, ages = [String(v.age)], B = [bal];
+    for (let m = 1; m <= yrs * 12; m++) { bal = bal * (1 + mr) + v.contrib; if (m % 12 === 0) { ages.push(String(v.age + m / 12)); B.push(bal); } }
+    const nest = bal, inf = 1 + v.infl / 100, gr = 1 + v.post / 100, need0 = Math.max(0, v.income - v.other) * Math.pow(inf, yrs);
+    let factor = 0; for (let t = 0; t < ret; t++) factor += Math.pow(inf / gr, t);
+    const required = need0 * factor;
+    let b = nest, outAge = null;
+    for (let t = 0; t < ret; t++) { b -= need0 * Math.pow(inf, t); if (b < 0 && outAge == null) outAge = v.retire + t; b = Math.max(0, b) * gr; ages.push(String(v.retire + t + 1)); B.push(b); }
+    const sustain = nest / factor / Math.pow(inf, yrs) + v.other, gap = nest - required;
+    const extraMonthly = gap < 0 ? -gap / ((Math.pow(1 + mr, yrs * 12) - 1) / mr || yrs * 12) : 0;
+    return {
+      primary: {label: `Savings at age ${v.retire}`, value: money0(nest), sub: gap >= 0 ? `<span class="pill good">On track</span> ${money0(gap)} more than you need` : `<span class="pill bad">Shortfall</span> ${money0(-gap)} less than you need`},
+      stats: [
+        {label: 'Nest egg needed', value: money0(required)},
+        {label: "Sustainable income (today's $)", value: money0(sustain) + '/yr', tone: sustain >= v.income ? 'good' : 'warn'},
+        {label: 'Money lasts until', value: outAge ? 'Age ' + outAge : `Past ${v.life}`, tone: outAge ? 'bad' : 'good'},
+        gap < 0 ? {label: 'Extra saving to close gap', value: money0(extraMonthly) + '/mo', tone: 'warn'} : {label: 'Left at age ' + v.life, value: money0(b)}
+      ],
+      charts: [{type: 'line', heading: 'Projected balance by age', x: ages, xName: 'Age', series: [{name: 'Balance', data: B, color: 'var(--c1)', area: true}], yFmt: compact$, tipFmt: money0}],
+      notes: 'Projections assume steady returns. Real markets vary year to year, so treat this as a planning estimate.'
+    };
+  }},
+{ id: 'inflation', name: 'Inflation', cat: 'finance', kw: 'cpi purchasing power cost of living',
+  desc: 'See what money costs or buys over time at a steady inflation rate.',
+  fields: [
+    {id: 'mode', label: 'I want to know', type: 'seg', value: 'future', options: [['future', 'Future cost'], ['power', 'Future buying power']]},
+    {id: 'amount', label: 'Amount', type: 'num', prefix: '$', value: 1000},
+    {type: 'row', fields: [{id: 'rate', label: 'Inflation rate', type: 'num', suffix: '%/yr', value: 3}, {id: 'years', label: 'Years', type: 'num', value: 20}]}
+  ],
+  formula: 'Future cost <code>= A × (1 + i)<sup>t</sup></code>. Future buying power <code>= A ÷ (1 + i)<sup>t</sup></code>.',
+  compute(v) {
+    const f = t => v.mode === 'future' ? v.amount * Math.pow(1 + v.rate / 100, t) : v.amount / Math.pow(1 + v.rate / 100, t);
+    const n = Math.max(1, Math.round(v.years)), X = [], S = [];
+    for (let t = 0; t <= n; t++) { X.push(String(t)); S.push(f(t)); }
+    const end = f(v.years), cum = (Math.pow(1 + v.rate / 100, v.years) - 1) * 100;
+    return {
+      primary: {label: v.mode === 'future' ? `Cost in ${num(v.years, 1)} years` : `Buying power in ${num(v.years, 1)} years`, value: money(end), sub: v.mode === 'future' ? `What ${money0(v.amount)} buys today will cost this much.` : `${money0(v.amount)} will buy what this buys today.`},
+      stats: [{label: 'Cumulative inflation', value: pct(cum, 1)}, {label: 'Value lost per dollar', value: money(1 - 1 / Math.pow(1 + v.rate / 100, v.years))}, {label: 'Prices double in', value: v.rate > 0 ? num(Math.log(2) / Math.log(1 + v.rate / 100), 1) + ' years' : 'Never'}],
+      charts: [{type: 'line', heading: v.mode === 'future' ? 'Cost over time' : 'Buying power over time', x: X, xName: 'Year', series: [{name: v.mode === 'future' ? 'Cost' : 'Buying power', data: S, color: 'var(--c2)', area: true}], yFmt: compact$, tipFmt: money}]
+    };
+  }},
+{ id: 'salary', name: 'Salary', cat: 'finance', kw: 'hourly wage pay annual income paycheck',
+  desc: 'Convert pay between hourly, weekly, monthly and yearly, with holidays and vacation taken into account.',
+  fields: [
+    {type: 'row', fields: [
+      {id: 'amount', label: 'Pay', type: 'num', prefix: '$', value: 38},
+      {id: 'per', label: 'Per', type: 'select', value: 'hour', options: [['hour', 'Hour'], ['day', 'Day'], ['week', 'Week'], ['biweek', '2 weeks'], ['semimonth', 'Half-month'], ['month', 'Month'], ['quarter', 'Quarter'], ['year', 'Year']]}]},
+    {type: 'row', fields: [{id: 'hours', label: 'Hours / week', type: 'num', value: 40}, {id: 'days', label: 'Days / week', type: 'num', value: 5}]},
+    {type: 'row', fields: [{id: 'hol', label: 'Holidays', type: 'num', suffix: 'days', value: 10}, {id: 'vac', label: 'Vacation', type: 'num', suffix: 'days', value: 15}]}
+  ],
+  compute(v) {
+    const per = {hour: v.hours * 52, day: v.days * 52, week: 52, biweek: 26, semimonth: 24, month: 12, quarter: 4, year: 1}[v.per];
+    const annual = v.amount * per, hourly = annual / (v.hours * 52), workdays = Math.max(0, 52 * v.days - v.hol - v.vac), hpd = v.hours / v.days;
+    const hourlyPaid = v.per === 'hour' || v.per === 'day';
+    const annualA = hourlyPaid ? hourly * hpd * workdays : annual, hourlyA = hourlyPaid ? hourly : annual / (workdays * hpd);
+    const rowsFor = (A, H, dayRate) => [H, dayRate, A / 52, A / 26, A / 24, A / 12, A / 4, A];
+    const u = rowsFor(annual, hourly, annual / (v.days * 52)), a = rowsFor(annualA, hourlyA, annualA / workdays);
+    const labels = ['Hourly', 'Daily', 'Weekly', 'Bi-weekly', 'Semi-monthly', 'Monthly', 'Quarterly', 'Annual'];
+    return {
+      primary: {label: 'Annual pay', value: money0(annual), sub: `${money(hourly)} an hour across 52 working weeks`},
+      stats: [{label: 'Monthly', value: money0(annual / 12)}, {label: 'Bi-weekly paycheck', value: money0(annual / 26)}, {label: 'Paid days off', value: plural(v.hol + v.vac, 'day')}, {label: hourlyPaid ? 'Annual, unpaid time off' : 'Effective hourly rate', value: hourlyPaid ? money0(annualA) : money(hourlyA)}],
+      table: {open: true, title: 'Pay at every interval', head: ['Interval', 'Unadjusted', 'Holiday & vacation adjusted'], rows: labels.map((l, i) => [l, money(u[i]), money(a[i])])},
+      notes: hourlyPaid ? 'Adjusted figures assume holidays and vacation days are unpaid.' : 'Adjusted figures spread your salary over the days you actually work, raising the effective hourly rate.'
+    };
+  }},
+{ id: 'salestax', name: 'Sales Tax', cat: 'finance', kw: 'vat gst tax price total',
+  desc: 'Add tax to a price, or back it out of a receipt total.',
+  fields: [
+    {id: 'mode', label: 'Mode', type: 'seg', value: 'add', options: [['add', 'Add tax'], ['remove', 'Remove tax']]},
+    {id: 'amount', label: 'Price before tax', type: 'num', prefix: '$', value: 249.99, show: v => v.mode === 'add'},
+    {id: 'total', label: 'Total including tax', type: 'num', prefix: '$', value: 270.62, show: v => v.mode === 'remove'},
+    {id: 'rate', label: 'Tax rate', type: 'num', suffix: '%', value: 8.25, range: [0, 25, 0.05]}
+  ],
+  compute(v) {
+    const r = v.rate / 100, pre = v.mode === 'add' ? v.amount : v.total / (1 + r), tax = pre * r;
+    return {
+      primary: {label: v.mode === 'add' ? 'Total with tax' : 'Price before tax', value: money(v.mode === 'add' ? pre + tax : pre)},
+      stats: [{label: 'Tax amount', value: money(tax)}, {label: 'Pre-tax', value: money(pre)}, {label: 'Total', value: money(pre + tax)}],
+      charts: [{type: 'donut', centerLabel: 'total', data: [{label: 'Price', value: pre, color: 'var(--c1)'}, {label: 'Tax', value: tax, color: 'var(--c2)'}]}]
+    };
+  }},
+{ id: 'tip', name: 'Tip & Split', cat: 'finance', kw: 'gratuity restaurant bill split share',
+  desc: 'Work out the tip and split the bill evenly, with optional rounding.',
+  fields: [
+    {id: 'bill', label: 'Bill', type: 'num', prefix: '$', value: 86.40},
+    {id: 'tip', label: 'Tip', type: 'seg', value: '18', options: [['15', '15%'], ['18', '18%'], ['20', '20%'], ['25', '25%'], ['custom', 'Custom']]},
+    {id: 'custom', label: 'Custom tip', type: 'num', suffix: '%', value: 22, show: v => v.tip === 'custom'},
+    {id: 'people', label: 'People', type: 'num', value: 3, range: [1, 20, 1]},
+    {id: 'round', label: 'Round each share up', type: 'seg', value: 'none', options: [['none', 'No'], ['1', 'To $1'], ['5', 'To $5']]}
+  ],
+  compute(v) {
+    const p = v.tip === 'custom' ? v.custom : +v.tip, people = Math.max(1, Math.round(v.people)), tip = v.bill * p / 100;
+    let share = (v.bill + tip) / people; const step = v.round === 'none' ? 0 : +v.round;
+    if (step) share = Math.ceil(share / step - 1e-9) * step;
+    const total = share * people;
+    return {
+      primary: {label: people > 1 ? 'Each person pays' : 'Total', value: money(share), sub: `Tip ${pct(p, 1)} · effective ${pct((total - v.bill) / v.bill * 100, 1)}`},
+      stats: [{label: 'Tip', value: money(total - v.bill)}, {label: 'Total', value: money(total)}, {label: 'Tip per person', value: money((total - v.bill) / people)}],
+      charts: [{type: 'custom', html: hbarsHTML([10, 15, 18, 20, 25].map(t => ({label: t + '% tip', value: v.bill * (1 + t / 100) / people, text: money(v.bill * (1 + t / 100) / people) + ' each', color: t === p ? 'var(--accent)' : 'var(--line)'}))), heading: 'Compare tip levels'}]
+    };
+  }},
+{ id: 'roi', name: 'ROI & CAGR', cat: 'finance', kw: 'return on investment annualized growth rate profit',
+  desc: 'Total and annualized return on an investment.',
+  fields: [
+    {id: 'inv', label: 'Amount invested', type: 'num', prefix: '$', value: 15000},
+    {id: 'ret', label: 'Amount returned', type: 'num', prefix: '$', value: 23800},
+    {id: 'years', label: 'Holding period', type: 'num', suffix: 'years', value: 4.5}
+  ],
+  formula: 'ROI <code>= (returned − invested) ÷ invested</code>. CAGR <code>= (returned ÷ invested)<sup>1/years</sup> − 1</code>.',
+  compute(v) {
+    if (v.inv <= 0) return {error: 'The amount invested must be above zero.'};
+    const roi = (v.ret - v.inv) / v.inv * 100, cagr = v.years > 0 ? (Math.pow(v.ret / v.inv, 1 / v.years) - 1) * 100 : NaN;
+    return {
+      primary: {label: 'Return on investment', value: pct(roi), sub: `<span class="pill ${roi >= 0 ? 'good' : 'bad'}">${roi >= 0 ? 'Gain' : 'Loss'} of ${money(Math.abs(v.ret - v.inv))}</span>`},
+      stats: [{label: 'Annualized (CAGR)', value: pct(cagr), tone: cagr >= 0 ? 'good' : 'bad'}, {label: 'Multiple', value: num(v.ret / v.inv, 3) + '×'}, {label: 'Doubling time at this rate', value: cagr > 0 ? num(Math.log(2) / Math.log(1 + cagr / 100), 1) + ' yrs' : '—'}]
+    };
+  }},
+
+/* ---------- HEALTH ---------- */
+{ id: 'bmi', name: 'BMI', cat: 'health', kw: 'body mass index weight obesity healthy',
+  desc: 'Body Mass Index with your healthy weight range and how far you are from it.',
+  fields: [UNITS, ...HEIGHT, ...WEIGHT],
+  formula: 'BMI <code>= weight (kg) ÷ height (m)²</code>. Adult categories follow WHO cut-offs: under 18.5, 18.5–24.9, 25–29.9, and 30 or more.',
+  compute(v) {
+    const h = hCm(v) / 100, w = wKg(v); if (!(h > 0 && w > 0)) return {error: 'Height and weight must be above zero.'};
+    const bmi = w / (h * h), lo = 18.5 * h * h, hi = 24.9 * h * h;
+    const cat = bmi < 18.5 ? ['Underweight', 'warn'] : bmi < 25 ? ['Healthy weight', 'good'] : bmi < 30 ? ['Overweight', 'warn'] : bmi < 35 ? ['Obesity class I', 'bad'] : bmi < 40 ? ['Obesity class II', 'bad'] : ['Obesity class III', 'bad'];
+    const delta = w < lo ? lo - w : w > hi ? w - hi : 0;
+    return {
+      primary: {label: 'Body Mass Index', value: num(bmi, 1), sub: `<span class="pill ${cat[1]}">${cat[0]}</span>`},
+      charts: [{type: 'gauge', min: 14, max: 40, value: bmi, bands: [{to: 18.5, label: 'Under', color: 'var(--c3)'}, {to: 25, label: 'Healthy', color: 'var(--good)'}, {to: 30, label: 'Over', color: 'var(--warn)'}, {to: 40, label: 'Obese', color: 'var(--bad)'}]}],
+      stats: [{label: 'Healthy range for your height', value: showW(lo, v) + ' – ' + showW(hi, v)}, {label: delta ? (w < lo ? 'To gain to reach range' : 'To lose to reach range') : 'Distance to range', value: delta ? showW(delta, v) : 'Within range', tone: delta ? 'warn' : 'good'}, {label: 'BMI Prime', value: num(bmi / 25, 2)}, {label: 'Ponderal index', value: num(w / Math.pow(h, 3), 1) + ' kg/m³'}],
+      notes: 'BMI is a screening measure. It does not tell muscle from fat, so athletes and older adults can be misclassified. Use the body fat calculator for a second view.'
+    };
+  }},
+{ id: 'calorie', name: 'Calorie & TDEE', cat: 'health', kw: 'tdee bmr calories diet macro weight loss maintenance',
+  desc: 'Daily energy needs, BMR, and calorie targets for losing, keeping or gaining weight, with macros.',
+  fields: [UNITS, SEX, AGE, ...HEIGHT, ...WEIGHT,
+    {id: 'act', label: 'Activity', type: 'select', value: '1.55', options: [['1.2', 'Sedentary: desk job, little exercise'], ['1.375', 'Light: exercise 1–3 days/week'], ['1.55', 'Moderate: exercise 3–5 days/week'], ['1.725', 'Active: hard exercise 6–7 days/week'], ['1.9', 'Very active: physical job plus training']]},
+    {id: 'formula', label: 'BMR formula', type: 'seg', value: 'msj', options: [['msj', 'Mifflin-St Jeor'], ['hb', 'Harris-Benedict']]},
+    {id: 'goal', label: 'Goal', type: 'select', value: '-500', options: [['-1000', 'Lose fast (−1,000 kcal/day)'], ['-500', 'Lose (−500 kcal/day)'], ['-250', 'Lose slowly (−250 kcal/day)'], ['0', 'Maintain'], ['250', 'Lean gain (+250 kcal/day)'], ['500', 'Gain (+500 kcal/day)']]},
+    {id: 'macro', label: 'Macro split', type: 'seg', value: 'bal', options: [['bal', 'Balanced'], ['hp', 'High protein'], ['lc', 'Low carb']]}
+  ],
+  formula: 'Mifflin-St Jeor: <code>10·kg + 6.25·cm − 5·age + 5</code> (men) or <code>− 161</code> (women). TDEE is BMR times the activity factor. A 500 kcal daily deficit is roughly 0.45 kg (1 lb) per week.',
+  compute(v) {
+    const h = hCm(v), w = wKg(v), m = v.sex === 'male';
+    const bmr = v.formula === 'msj' ? 10 * w + 6.25 * h - 5 * v.age + (m ? 5 : -161) : m ? 13.397 * w + 4.799 * h - 5.677 * v.age + 88.362 : 9.247 * w + 3.098 * h - 4.330 * v.age + 447.593;
+    const tdee = bmr * +v.act, floor = m ? 1500 : 1200, target = Math.max(floor, tdee + +v.goal);
+    const split = {bal: [30, 40, 30], hp: [40, 35, 25], lc: [35, 25, 40]}[v.macro];
+    const g = [target * split[0] / 100 / 4, target * split[1] / 100 / 4, target * split[2] / 100 / 9];
+    const wk = (target - tdee) * 7 / 7700;
+    return {
+      primary: {label: 'Daily calorie target', value: num(target, 0) + ' <small>kcal</small>', sub: +v.goal ? `About ${showW(Math.abs(wk), v)} per week ${wk < 0 ? 'lost' : 'gained'}` : 'Keeps your weight steady'},
+      stats: [{label: 'Maintenance (TDEE)', value: num(tdee, 0) + ' kcal'}, {label: 'BMR (at rest)', value: num(bmr, 0) + ' kcal'}, {label: 'Protein', value: num(g[0], 0) + ' g'}, {label: 'Carbs · Fat', value: `${num(g[1], 0)} g · ${num(g[2], 0)} g`}],
+      charts: [{type: 'donut', heading: 'Macros at your target', fmt: x => num(x, 0) + ' kcal', centerLabel: 'kcal/day', center: num(target, 0), data: [{label: `Protein ${num(g[0], 0)} g`, value: g[0] * 4, color: 'var(--c4)'}, {label: `Carbs ${num(g[1], 0)} g`, value: g[1] * 4, color: 'var(--c2)'}, {label: `Fat ${num(g[2], 0)} g`, value: g[2] * 9, color: 'var(--c3)'}]}],
+      table: {open: true, title: 'Calories for each goal', head: ['Goal', 'kcal/day', 'Weekly change'], rows: [['Lose fast', -1000], ['Lose', -500], ['Lose slowly', -250], ['Maintain', 0], ['Lean gain', 250], ['Gain', 500]].map(([l, d]) => [l, num(Math.max(floor, tdee + d), 0), d ? (d < 0 ? '−' : '+') + showW(Math.abs(d) * 7 / 7700, v) : '—'])},
+      notes: target === floor && tdee + +v.goal < floor ? `Target held at ${floor} kcal, a common minimum without medical supervision.` : ''
+    };
+  }},
+{ id: 'bodyfat', name: 'Body Fat', cat: 'health', kw: 'navy method body fat percentage lean mass',
+  desc: 'U.S. Navy tape-measure method with fat mass, lean mass and fitness category.',
+  fields: [UNITS, SEX, AGE, ...HEIGHT, ...WEIGHT,
+    {type: 'row', fields: [
+      {id: 'neck', label: 'Neck', type: 'num', suffix: unitSfx('cm', 'in'), value: 15.5, conv: 'len'},
+      {id: 'waist', label: 'Waist', type: 'num', suffix: unitSfx('cm', 'in'), value: 34, conv: 'len', hint: 'At the navel'}]},
+    {id: 'hip', label: 'Hip', type: 'num', suffix: unitSfx('cm', 'in'), value: 39, conv: 'len', show: v => v.sex === 'female'}
+  ],
+  formula: 'Navy method (cm): men <code>495 ÷ (1.0324 − 0.19077·log(waist − neck) + 0.15456·log(height)) − 450</code>; women <code>495 ÷ (1.29579 − 0.35004·log(waist + hip − neck) + 0.221·log(height)) − 450</code>.',
+  compute(v) {
+    const k = isM(v) ? 1 : 2.54, h = hCm(v), n = v.neck * k, wa = v.waist * k, hp = (v.hip || 0) * k, w = wKg(v), m = v.sex === 'male';
+    const inner = m ? wa - n : wa + hp - n; if (inner <= 0) return {error: 'Waist must be larger than neck. Check your measurements.'};
+    const bf = m ? 495 / (1.0324 - 0.19077 * Math.log10(inner) + 0.15456 * Math.log10(h)) - 450 : 495 / (1.29579 - 0.35004 * Math.log10(inner) + 0.221 * Math.log10(h)) - 450;
+    const bands = m ? [[6, 'Essential'], [14, 'Athletes'], [18, 'Fitness'], [25, 'Average'], [45, 'Obese']] : [[14, 'Essential'], [21, 'Athletes'], [25, 'Fitness'], [32, 'Average'], [50, 'Obese']];
+    const cat = bands.find(b => bf < b[0]) || bands[bands.length - 1], tone = {Essential: 'warn', Athletes: 'good', Fitness: 'good', Average: 'warn', Obese: 'bad'}[cat[1]];
+    const bmi = w / Math.pow(h / 100, 2), bmiBf = 1.2 * bmi + 0.23 * v.age - (m ? 16.2 : 5.4);
+    const cols = ['var(--c3)', 'var(--good)', 'var(--c1)', 'var(--warn)', 'var(--bad)'];
+    return {
+      primary: {label: 'Body fat', value: pct(bf, 1), sub: `<span class="pill ${tone}">${cat[1]}</span>`},
+      charts: [{type: 'gauge', min: m ? 2 : 10, max: m ? 40 : 46, value: bf, bands: bands.map((b, i) => ({to: i === bands.length - 1 ? (m ? 40 : 46) : b[0], label: b[1], color: cols[i]}))}],
+      stats: [{label: 'Fat mass', value: showW(w * bf / 100, v)}, {label: 'Lean mass', value: showW(w * (1 - bf / 100), v)}, {label: 'BMI-based estimate', value: pct(bmiBf, 1)}, {label: 'Ideal for age (Jackson & Pollock)', value: pct(m ? (v.age < 30 ? 9 : v.age < 40 ? 11 : v.age < 50 ? 13 : 16) : (v.age < 30 ? 17.5 : v.age < 40 ? 19 : v.age < 50 ? 21.5 : 24), 1)}],
+      notes: 'Measure relaxed, with the tape snug but not compressing the skin. Categories follow the American Council on Exercise.'
+    };
+  }},
+{ id: 'idealweight', name: 'Ideal Weight', cat: 'health', kw: 'healthy weight devine robinson miller hamwi',
+  desc: 'Compares the four classic ideal-weight formulas against the healthy BMI range.',
+  fields: [UNITS, SEX, ...HEIGHT],
+  compute(v) {
+    const inch = hCm(v) / 2.54, over = Math.max(0, inch - 60), m = v.sex === 'male', h = hCm(v) / 100;
+    const F = [['Robinson (1983)', m ? 52 + 1.9 * over : 49 + 1.7 * over], ['Miller (1983)', m ? 56.2 + 1.41 * over : 53.1 + 1.36 * over], ['Devine (1974)', m ? 50 + 2.3 * over : 45.5 + 2.3 * over], ['Hamwi (1964)', m ? 48 + 2.7 * over : 45.5 + 2.2 * over]];
+    const avg = sum(F.map(f => f[1])) / 4;
+    return {
+      primary: {label: 'Healthy BMI range', value: showW(18.5 * h * h, v) + ' – ' + showW(24.9 * h * h, v), sub: `Formula average: ${showW(avg, v)}`},
+      charts: [{type: 'custom', heading: 'By formula', html: hbarsHTML(F.map(([l, kg], i) => ({label: l, value: kg, text: showW(kg, v), color: ['var(--c1)', 'var(--c2)', 'var(--c3)', 'var(--c4)'][i]})))}],
+      notes: inch < 60 ? 'These formulas were built for adults 5 ft (152 cm) and taller, so results below that height are rough.' : 'Formulas give a single number; the BMI range is a better target band for most adults.'
+    };
+  }},
+{ id: 'pace', name: 'Running Pace', cat: 'health', kw: 'run pace speed marathon 5k 10k split race time',
+  desc: 'Solve for pace, time or distance, with splits and race-time predictions.',
+  fields: [
+    {id: 'mode', label: 'Solve for', type: 'seg', value: 'pace', options: [['pace', 'Pace'], ['time', 'Time'], ['distance', 'Distance']]},
+    {id: 'preset', label: 'Race', type: 'select', value: '10k', show: v => v.mode !== 'distance', options: [['custom', 'Custom distance'], ['mile', '1 mile'], ['5k', '5K'], ['10k', '10K'], ['half', 'Half marathon'], ['marathon', 'Marathon']], effect: r => { const p = {mile: [1, 'mi'], '5k': [5, 'km'], '10k': [10, 'km'], half: [21.0975, 'km'], marathon: [42.195, 'km']}[r.preset]; if (p) { r.dist = p[0]; r.dunit = p[1]; } }},
+    {type: 'row', fields: [
+      {id: 'dist', label: 'Distance', type: 'num', value: 10, show: v => v.mode !== 'distance', effect: r => r.preset = 'custom'},
+      {id: 'dunit', label: 'Unit', type: 'seg', value: 'km', options: [['km', 'km'], ['mi', 'mi']], effect: r => r.preset = 'custom'}]},
+    {type: 'row', fields: [
+      {id: 'th', label: 'Time', type: 'num', suffix: 'h', value: 0, show: v => v.mode !== 'time'},
+      {id: 'tm', label: ' ', err: 'Time (minutes)', type: 'num', suffix: 'm', value: 52, show: v => v.mode !== 'time'},
+      {id: 'ts', label: ' ', err: 'Time (seconds)', type: 'num', suffix: 's', value: 30, show: v => v.mode !== 'time'}]},
+    {type: 'row', fields: [
+      {id: 'pm', label: 'Pace', type: 'num', suffix: 'min', value: 5, show: v => v.mode !== 'pace'},
+      {id: 'ps', label: ' ', err: 'Pace (seconds)', type: 'num', suffix: 's', value: 15, show: v => v.mode !== 'pace'}]},
+    {id: 'punit', label: 'Pace per', type: 'seg', value: 'km', show: v => v.mode !== 'pace', options: [['km', 'per km'], ['mi', 'per mile']]}
+  ],
+  formula: 'Race predictions use Riegel\'s formula <code>T₂ = T₁ × (D₂ ÷ D₁)<sup>1.06</sup></code>, which fits trained runners best between 1.5 km and the marathon.',
+  compute(v) {
+    const MI = 1.609344; let km = v.dunit === 'km' ? v.dist : v.dist * MI, t = v.th * 3600 + v.tm * 60 + v.ts, pk = (v.pm * 60 + v.ps) / (v.punit === 'km' ? 1 : MI);
+    if (v.mode === 'pace') pk = t / km; else if (v.mode === 'time') t = pk * km; else km = t / pk;
+    if (!(km > 0 && t > 0)) return {error: 'Enter a distance and time above zero.'};
+    pk = t / km;
+    const unitKm = v.dunit === 'km' ? 1 : MI, d = km / unitKm, splits = [];
+    for (let i = 1; i <= Math.min(Math.ceil(d - 1e-9), 60); i++) { const di = Math.min(i, d); splits.push([`${num(di, 2)} ${v.dunit}`, hms(pk * di * unitKm)]); }
+    const races = [['1 mile', MI], ['5K', 5], ['10K', 10], ['Half marathon', 21.0975], ['Marathon', 42.195]];
+    const val = {pace: `${hms(pk)} <small>/km</small>`, time: hms(t), distance: `${num(d, 2)} <small>${v.dunit}</small>`}[v.mode];
+    return {
+      primary: {label: {pace: 'Pace', time: 'Finish time', distance: 'Distance'}[v.mode], value: val, sub: `${hms(pk)}/km · ${hms(pk * MI)}/mi · ${num(km, 2)} km in ${hms(t)}`},
+      stats: [{label: 'Pace per km', value: hms(pk)}, {label: 'Pace per mile', value: hms(pk * MI)}, {label: 'Speed', value: `${num(3600 / pk, 2)} km/h`}, {label: 'Speed (mph)', value: num(3600 / pk / MI, 2)}],
+      charts: [{type: 'custom', heading: 'Predicted race times at this effort', html: hbarsHTML(races.map(([l, rk]) => { const T = t * Math.pow(rk / km, 1.06); return {label: l, value: T, text: hms(T) + ` · ${hms(T / rk)}/km`, color: 'var(--c4)'}; }))}],
+      table: {title: `Splits per ${v.dunit}`, head: ['Distance', 'Elapsed'], rows: splits}
+    };
+  }},
+{ id: 'duedate', name: 'Pregnancy Due Date', cat: 'health', kw: 'pregnancy due date conception trimester week',
+  desc: 'Estimated due date, how far along you are, and the key milestone dates.',
+  fields: [
+    {id: 'method', label: 'Based on', type: 'seg', value: 'lmp', options: [['lmp', 'Last period'], ['conc', 'Conception'], ['ivf', 'IVF transfer']]},
+    {id: 'date', label: 'Date', type: 'date', value: () => shiftISO(-84)},
+    {id: 'cycle', label: 'Average cycle length', type: 'num', suffix: 'days', value: 28, show: v => v.method === 'lmp'},
+    {id: 'ivfday', label: 'Embryo age at transfer', type: 'seg', value: '5', show: v => v.method === 'ivf', options: [['3', 'Day 3'], ['5', 'Day 5'], ['6', 'Day 6']]}
+  ],
+  formula: 'Naegele\'s rule: due date is 280 days after the first day of the last period, shifted by cycle length minus 28. From conception it is 266 days; from an IVF transfer it is 266 days minus the embryo\'s age.',
+  compute(v) {
+    const d = D(v.date); if (!d) return {error: 'Choose a date.'};
+    const due = v.method === 'lmp' ? addDays(d, 280 + (v.cycle - 28)) : v.method === 'conc' ? addDays(d, 266) : addDays(d, 266 - +v.ivfday);
+    const lmpEq = addDays(due, -280), today = D(todayISO()), ga = daysBetween(lmpEq, today), wk = Math.floor(ga / 7), dd = ga % 7;
+    const tri = ga < 0 ? '—' : wk < 14 ? 'First trimester' : wk < 28 ? 'Second trimester' : 'Third trimester';
+    const ms = [[6, 'Heartbeat usually visible on ultrasound'], [10, 'Prenatal screening (NIPT) available'], [14, 'Second trimester begins'], [20, 'Anatomy scan (18–22 weeks)'], [24, 'Viability milestone'], [28, 'Third trimester begins'], [37, 'Early term'], [39, 'Full term'], [40, 'Estimated due date']];
+    const left = daysBetween(today, due);
+    return {
+      primary: {label: 'Estimated due date', value: fmtDate(due), sub: ga >= 0 && ga <= 300 ? `<span class="pill good">${wk} weeks ${dd} days</span> ${tri}` : 'Pick a date within the last ten months to see progress.'},
+      charts: ga >= 0 && ga <= 300 ? [{type: 'gauge', min: 0, max: 42, value: ga / 7, bands: [{to: 14, label: '1st trimester', color: 'var(--c3)'}, {to: 28, label: '2nd trimester', color: 'var(--c1)'}, {to: 42, label: '3rd trimester', color: 'var(--c4)'}]}] : [],
+      stats: [{label: 'Days to go', value: left >= 0 ? num(left, 0) : 'Past due date'}, {label: 'Estimated conception', value: fmtDate(addDays(lmpEq, 14), false)}, {label: 'Progress', value: pct(clamp(ga / 280 * 100, 0, 100), 0)}],
+      table: {open: true, title: 'Milestones', head: ['Week', 'Milestone', 'Date'], rows: ms.map(([w, l]) => [w, l, fmtDate(addDays(lmpEq, w * 7), false)])},
+      notes: 'Only about 1 in 20 babies arrive on the due date itself; most come within two weeks either side. Your provider may adjust the date after an early ultrasound.'
+    };
+  }},
+
+/* ---------- MATH ---------- */
+{ id: 'scientific', name: 'Scientific Calculator', cat: 'math', kw: 'calculator trig sin cos log exponent memory', full: true,
+  desc: 'Type or tap expressions with live results, degree/radian trig, memory and a history you can reuse.', mount: el => mountScientific(el, 'sci') },
+{ id: 'graph', name: 'Graphing', cat: 'math', kw: 'plot function graph curve roots intersection',
+  desc: 'Plot up to three functions of x, then read off roots and intersections.',
+  fields: [
+    {id: 'f1', label: 'f(x)', type: 'text1', value: 'sin(x)*3'},
+    {id: 'f2', label: 'g(x)', type: 'text1', value: 'x^2/4 - 2'},
+    {id: 'f3', label: 'h(x)', type: 'text1', value: '', ph: 'optional'},
+    {type: 'row', fields: [{id: 'xmin', label: 'x from', type: 'num', value: -8}, {id: 'xmax', label: 'x to', type: 'num', value: 8}]},
+    {id: 'ang', label: 'Trig angles', type: 'seg', value: 'rad', options: [['rad', 'Radians'], ['deg', 'Degrees']]}
+  ],
+  compute(v) {
+    if (!(v.xmax > v.xmin)) return {error: '“x to” must be greater than “x from”.'};
+    const cols = ['var(--c1)', 'var(--c2)', 'var(--c3)'], names = ['f', 'g', 'h'], fns = [], errs = [];
+    ['f1', 'f2', 'f3'].forEach((k, i) => { const s = (v[k] || '').trim(); if (!s) return; try { const c = Expr.compile(s); const sc = {__deg: v.ang === 'deg', x: 0}; fns.push({label: `${names[i]}(x) = ${s}`, color: cols[i], f: x => { sc.x = x; return c(sc); }, n: names[i]}); } catch (e) { errs.push(`${names[i]}(x): ${e.message}`); } });
+    if (!fns.length) return {error: errs[0] || 'Enter at least one function of x, such as x^2 − 3.'};
+    const roots = (f, lim = 8) => { const out = [], N = 2000; let px = v.xmin, py = f(px); for (let i = 1; i <= N; i++) { const x = v.xmin + (v.xmax - v.xmin) * i / N, y = f(x); if (fin(py) && fin(y)) { if (y === 0) out.push(x); else if (py * y < 0 && Math.abs(y - py) < 1e3) { let a = px, b = x; for (let j = 0; j < 60; j++) { const m = (a + b) / 2; f(a) * f(m) <= 0 ? b = m : a = m; } out.push((a + b) / 2); } } px = x; py = y; if (out.length >= lim) break; } return out; };
+    const pts = [], rows = [];
+    fns.forEach(fn => { const r = roots(x => fn.f(x)); r.forEach(x => pts.push({x, y: 0, color: fn.color})); rows.push([`Roots of ${fn.n}(x)`, r.length ? r.map(x => num(x, 4)).join(', ') : 'None in range']); });
+    if (fns.length > 1) { const a = fns[0], b = fns[1], r = roots(x => a.f(x) - b.f(x)); r.forEach(x => pts.push({x, y: a.f(x), color: 'var(--ink)', label: `(${num(x, 2)}, ${num(a.f(x), 2)})`})); rows.push([`${a.n}(x) = ${b.n}(x) at`, r.length ? r.map(x => `x = ${num(x, 4)}`).join(', ') : 'No intersection in range']); }
+    return {charts: [{type: 'plot', xmin: v.xmin, xmax: v.xmax, fns, points: pts}], rows, notes: (errs.length ? `<p style="color:var(--bad)">${errs.map(esc).join('<br>')}</p>` : '') + '<p>Use <code>^</code> for powers and functions like <code>sqrt</code>, <code>ln</code>, <code>log</code>, <code>abs</code>, <code>sin</code>. Implicit multiplication works: <code>2x</code>, <code>3sin(x)</code>.</p>'};
+  }},
+{ id: 'percentage', name: 'Percentage', cat: 'math', kw: 'percent change increase decrease difference ratio',
+  desc: 'Every common percent question: part of a whole, percent change, increases and differences.',
+  fields: [
+    {id: 'mode', label: 'Question', type: 'select', value: 'of', options: [['of', 'What is X% of Y?'], ['what', 'X is what percent of Y?'], ['change', 'Percent change from X to Y'], ['apply', 'Increase or decrease Y by X%'], ['diff', 'Percent difference between X and Y']]},
+    {type: 'row', fields: [
+      {id: 'a', label: 'X', type: 'num', value: 15, suffix: v => ['of', 'apply'].includes(v.mode) ? '%' : ''},
+      {id: 'b', label: 'Y', type: 'num', value: 240}]},
+    {id: 'dir', label: 'Direction', type: 'seg', value: 'up', show: v => v.mode === 'apply', options: [['up', 'Increase'], ['down', 'Decrease']]}
+  ],
+  compute(v) {
+    const {a, b} = v; let label, val, sub = '';
+    switch (v.mode) {
+      case 'of': label = `${num(a, 6)}% of ${num(b, 6)}`; val = num(a / 100 * b, 8); sub = `${num(b, 6)} × ${num(a, 6)} ÷ 100`; break;
+      case 'what': if (!b) return {error: 'Y cannot be zero.'}; label = `${num(a, 6)} is this percent of ${num(b, 6)}`; val = pct(a / b * 100, 6); sub = `${num(a, 6)} ÷ ${num(b, 6)} × 100`; break;
+      case 'change': if (!a) return {error: 'X cannot be zero for a percent change.'}; { const c = (b - a) / Math.abs(a) * 100; label = `Change from ${num(a, 6)} to ${num(b, 6)}`; val = (c > 0 ? '+' : '') + pct(c, 4); sub = `<span class="pill ${c >= 0 ? 'good' : 'bad'}">${c >= 0 ? 'Increase' : 'Decrease'} of ${num(Math.abs(b - a), 6)}</span>`; } break;
+      case 'apply': { const r = b * (1 + (v.dir === 'up' ? 1 : -1) * a / 100); label = `${num(b, 6)} ${v.dir === 'up' ? 'increased' : 'decreased'} by ${num(a, 6)}%`; val = num(r, 8); sub = `Difference of ${num(Math.abs(r - b), 6)}`; } break;
+      case 'diff': if (a + b === 0) return {error: 'X and Y cannot average to zero.'}; label = `Difference between ${num(a, 6)} and ${num(b, 6)}`; val = pct(Math.abs(a - b) / ((a + b) / 2) * 100, 4); sub = '|X − Y| ÷ ((X + Y) ÷ 2) × 100'; break;
+    }
+    return {primary: {label, value: val, sub}};
+  }},
+{ id: 'fraction', name: 'Fraction', cat: 'math', kw: 'fraction add subtract multiply divide simplify mixed number',
+  desc: 'Add, subtract, multiply and divide fractions, simplified to lowest terms and mixed numbers.',
+  fields: [
+    {type: 'row', fields: [{id: 'n1', label: 'First fraction', type: 'num', value: 3, suffix: 'top'}, {id: 'd1', label: ' ', err: 'First denominator', type: 'num', value: 4, suffix: 'bottom'}]},
+    {id: 'op', label: 'Operation', type: 'seg', value: '+', options: [['+', '+'], ['-', '−'], ['*', '×'], ['/', '÷']]},
+    {type: 'row', fields: [{id: 'n2', label: 'Second fraction', type: 'num', value: 5, suffix: 'top'}, {id: 'd2', label: ' ', err: 'Second denominator', type: 'num', value: 6, suffix: 'bottom'}]}
+  ],
+  compute(v) {
+    const ints = [v.n1, v.d1, v.n2, v.d2].every(Number.isInteger); if (!ints) return {error: 'Use whole numbers for numerators and denominators.'};
+    if (!v.d1 || !v.d2) return {error: 'Denominators cannot be zero.'};
+    const gcd = (a, b) => { a = Math.abs(a); b = Math.abs(b); while (b) [a, b] = [b, a % b]; return a || 1; };
+    let n, d, step;
+    if (v.op === '+' || v.op === '-') { const l = Math.abs(v.d1 * v.d2) / gcd(v.d1, v.d2), a = v.n1 * l / v.d1, b = v.n2 * l / v.d2; n = v.op === '+' ? a + b : a - b; d = l; step = `Common denominator ${l}: ${a}/${l} ${v.op === '+' ? '+' : '−'} ${b}/${l} = ${n}/${l}`; }
+    else if (v.op === '*') { n = v.n1 * v.n2; d = v.d1 * v.d2; step = `Multiply across: (${v.n1}×${v.n2}) / (${v.d1}×${v.d2}) = ${n}/${d}`; }
+    else { if (!v.n2) return {error: 'Cannot divide by a fraction equal to zero.'}; n = v.n1 * v.d2; d = v.d1 * v.n2; step = `Multiply by the reciprocal: ${v.n1}/${v.d1} × ${v.d2}/${v.n2} = ${n}/${d}`; }
+    if (d < 0) { n = -n; d = -d; }
+    const g = gcd(n, d), sn = n / g, sd = d / g, whole = Math.trunc(sn / sd), rem = Math.abs(sn % sd);
+    const fr = (a, b) => `<span class="frac"><span>${a}</span><span>${b}</span></span>`;
+    return {
+      primary: {label: 'Result', value: sd === 1 ? String(sn) : fr(sn, sd), sub: `${fr(v.n1, v.d1)} ${{'+': '+', '-': '−', '*': '×', '/': '÷'}[v.op]} ${fr(v.n2, v.d2)}`},
+      stats: [{label: 'Decimal', value: num(sn / sd, 10)}, {label: 'Mixed number', value: sd === 1 ? String(sn) : whole ? `${whole} ${rem}/${sd}` : `${sn}/${sd}`}, {label: 'Percent', value: pct(sn / sd * 100, 4)}],
+      rows: [['Step 1', step], ['Step 2', g > 1 ? `Divide top and bottom by ${g}: ${sn}/${sd}` : 'Already in lowest terms']]
+    };
+  }},
+{ id: 'stats', name: 'Statistics', cat: 'math', kw: 'standard deviation mean median mode variance quartile average',
+  desc: 'Paste a list of numbers for mean, median, standard deviation, quartiles and a histogram.',
+  fields: [
+    {id: 'data', label: 'Numbers', type: 'text', value: '72, 85, 90, 66, 78, 95, 88, 71, 84, 79, 92, 68, 77, 83, 89, 74, 81, 87, 70, 93', hint: 'Separate with commas, spaces or new lines'},
+    {id: 'kind', label: 'Data is a', type: 'seg', value: 'sample', options: [['sample', 'Sample'], ['pop', 'Population']]}
+  ],
+  formula: 'Sample standard deviation <code>s = √(Σ(x − x̄)² ÷ (n − 1))</code>; population uses n instead of n − 1. Quartiles use linear interpolation between ranks.',
+  compute(v) {
+    const xs = String(v.data).split(/[\s,;]+/).map(Number).filter(fin);
+    if (xs.length < 2) return {error: 'Enter at least two numbers.'};
+    const s = xs.slice().sort((a, b) => a - b), n = s.length, mean = sum(s) / n;
+    const q = p => { const i = (n - 1) * p, lo = Math.floor(i); return s[lo] + (s[Math.min(lo + 1, n - 1)] - s[lo]) * (i - lo); };
+    const ss = sum(s.map(x => (x - mean) ** 2)), varS = ss / (n - 1), varP = ss / n, sd = Math.sqrt(v.kind === 'sample' ? varS : varP);
+    const freq = {}; s.forEach(x => freq[x] = (freq[x] || 0) + 1); const mf = Math.max(...Object.values(freq));
+    const modes = mf > 1 ? Object.keys(freq).filter(k => freq[k] === mf).map(Number) : [];
+    const bins = Math.max(4, Math.min(16, Math.ceil(Math.log2(n) + 1))), w = (s[n - 1] - s[0]) / bins || 1, hist = Array(bins).fill(0);
+    s.forEach(x => hist[Math.min(bins - 1, Math.floor((x - s[0]) / w))]++);
+    const skew = sum(s.map(x => ((x - mean) / Math.sqrt(varP)) ** 3)) / n;
+    return {
+      primary: {label: `Standard deviation (${v.kind === 'sample' ? 'sample' : 'population'})`, value: num(sd, 6), sub: `n = ${n} · mean ${num(mean, 6)}`},
+      stats: [{label: 'Mean', value: num(mean, 6)}, {label: 'Median', value: num(q(.5), 6)}, {label: 'Mode', value: modes.length ? modes.slice(0, 4).map(m => num(m, 4)).join(', ') : 'None'}, {label: 'Range', value: `${num(s[0], 4)} – ${num(s[n - 1], 4)}`}],
+      charts: [{type: 'bars', heading: 'Distribution', x: hist.map((_, i) => num(s[0] + i * w, 1)), data: hist, color: 'var(--c3)'}],
+      rows: [['Count', n], ['Sum', num(sum(s), 6)], ['Variance (sample)', num(varS, 6)], ['Variance (population)', num(varP, 6)], ['Std dev (sample)', num(Math.sqrt(varS), 6)], ['Std dev (population)', num(Math.sqrt(varP), 6)], ['Standard error of mean', num(Math.sqrt(varS / n), 6)], ['Q1 · Q3', `${num(q(.25), 4)} · ${num(q(.75), 4)}`], ['Interquartile range', num(q(.75) - q(.25), 4)], ['Coefficient of variation', pct(sd / Math.abs(mean) * 100, 2)], ['Skewness', num(skew, 4)], ['95% CI for mean', `${num(mean - 1.96 * Math.sqrt(varS / n), 4)} – ${num(mean + 1.96 * Math.sqrt(varS / n), 4)}`]]
+    };
+  }},
+{ id: 'quadratic', name: 'Quadratic Solver', cat: 'math', kw: 'quadratic equation roots parabola vertex discriminant',
+  desc: 'Solve ax² + bx + c = 0, including complex roots, with the parabola drawn.',
+  fields: [{type: 'row', fields: [{id: 'a', label: 'a', type: 'num', value: 1}, {id: 'b', label: 'b', type: 'num', value: -3}, {id: 'c', label: 'c', type: 'num', value: -4}]}],
+  formula: '<code>x = (−b ± √(b² − 4ac)) ÷ 2a</code>. The discriminant b² − 4ac decides whether there are two real roots, one, or a complex pair.',
+  compute(v) {
+    const {a, b, c} = v; if (!a) return b ? {primary: {label: 'Linear equation, one root', value: 'x = ' + num(-c / b, 8)}} : {error: 'With a and b both zero there is no variable to solve for.'};
+    const disc = b * b - 4 * a * c, vx = -b / (2 * a), vy = a * vx * vx + b * vx + c; let val, pts = [{x: vx, y: vy, label: 'vertex', color: 'var(--c2)'}];
+    if (disc > 0) { const r1 = (-b - Math.sqrt(disc)) / (2 * a), r2 = (-b + Math.sqrt(disc)) / (2 * a); val = `x = ${num(Math.min(r1, r2), 8)}, ${num(Math.max(r1, r2), 8)}`; pts.push({x: r1, y: 0, color: 'var(--c1)'}, {x: r2, y: 0, color: 'var(--c1)'}); }
+    else if (disc === 0) { val = 'x = ' + num(vx, 8); }
+    else { const im = Math.sqrt(-disc) / (2 * Math.abs(a)); val = `x = ${num(vx, 6)} ± ${num(im, 6)}i`; }
+    const span = Math.max(4, disc > 0 ? Math.sqrt(disc) / Math.abs(a) * 1.2 : 4);
+    return {
+      primary: {label: disc > 0 ? 'Two real roots' : disc === 0 ? 'One repeated root' : 'Complex roots', value: val},
+      stats: [{label: 'Discriminant', value: num(disc, 6)}, {label: 'Vertex', value: `(${num(vx, 4)}, ${num(vy, 4)})`}, {label: 'Opens', value: a > 0 ? 'Upward (minimum)' : 'Downward (maximum)'}, {label: 'y-intercept', value: num(c, 6)}],
+      charts: [{type: 'plot', h: 300, xmin: vx - span, xmax: vx + span, fns: [{label: `${num(a, 4)}x² ${b < 0 ? '−' : '+'} ${num(Math.abs(b), 4)}x ${c < 0 ? '−' : '+'} ${num(Math.abs(c), 4)}`, color: 'var(--c3)', f: x => a * x * x + b * x + c}], points: pts}]
+    };
+  }},
+{ id: 'triangle', name: 'Triangle', cat: 'math', kw: 'triangle sides angles area law of cosines sines geometry',
+  desc: 'Solve any triangle from three known parts, drawn to scale.',
+  fields: [
+    {id: 'mode', label: 'Known values', type: 'seg', value: 'sss', options: [['sss', '3 sides'], ['sas', '2 sides + angle'], ['asa', '2 angles + side'], ['right', 'Right triangle']]},
+    {type: 'row', fields: [
+      {id: 'a', label: 'Side a', type: 'num', value: 7, show: v => ['sss', 'right'].includes(v.mode)},
+      {id: 'b', label: 'Side b', type: 'num', value: 8, show: v => v.mode !== 'asa'},
+      {id: 'c', label: 'Side c', type: 'num', value: 9, show: v => ['sss', 'sas', 'asa'].includes(v.mode)}]},
+    {type: 'row', fields: [
+      {id: 'A', label: 'Angle A', type: 'num', suffix: '°', value: 60, show: v => ['sas', 'asa'].includes(v.mode), hint: 'Between b and c'},
+      {id: 'B', label: 'Angle B', type: 'num', suffix: '°', value: 50, show: v => v.mode === 'asa'}]}
+  ],
+  formula: 'Law of cosines <code>a² = b² + c² − 2bc·cos A</code>, law of sines <code>a ÷ sin A = b ÷ sin B</code>, and Heron\'s formula for area.',
+  compute(v) {
+    const R = Math.PI / 180; let {a, b, c, A, B} = v, C;
+    if (v.mode === 'sss') { if (a + b <= c || a + c <= b || b + c <= a) return {error: 'These sides cannot form a triangle: each side must be shorter than the other two combined.'}; }
+    else if (v.mode === 'sas') { if (!(A > 0 && A < 180)) return {error: 'Angle A must be between 0° and 180°.'}; a = Math.sqrt(b * b + c * c - 2 * b * c * Math.cos(A * R)); }
+    else if (v.mode === 'asa') { if (!(A > 0 && B > 0 && A + B < 180)) return {error: 'Angles must be positive and add up to less than 180°.'}; C = 180 - A - B; a = c * Math.sin(A * R) / Math.sin(C * R); b = c * Math.sin(B * R) / Math.sin(C * R); }
+    else { c = Math.hypot(a, b); }
+    if (!(a > 0 && b > 0 && c > 0)) return {error: 'Sides must be above zero.'};
+    A = Math.acos(clamp((b * b + c * c - a * a) / (2 * b * c), -1, 1)) / R; B = Math.acos(clamp((a * a + c * c - b * b) / (2 * a * c), -1, 1)) / R; C = 180 - A - B;
+    const s = (a + b + c) / 2, area = Math.sqrt(Math.max(0, s * (s - a) * (s - b) * (s - c)));
+    const eq = Math.abs(a - b) < 1e-9 && Math.abs(b - c) < 1e-9, iso = Math.abs(a - b) < 1e-9 || Math.abs(b - c) < 1e-9 || Math.abs(a - c) < 1e-9, mx = Math.max(A, B, C);
+    const kind = `${eq ? 'Equilateral' : iso ? 'Isosceles' : 'Scalene'}, ${Math.abs(mx - 90) < 1e-7 ? 'right' : mx > 90 ? 'obtuse' : 'acute'}`;
+    // drawing
+    const P = [[0, 0], [c, 0], [b * Math.cos(A * R), b * Math.sin(A * R)]], xs = P.map(p => p[0]), ys = P.map(p => p[1]);
+    const minx = Math.min(...xs), maxx = Math.max(...xs), maxy = Math.max(...ys), W = 600, H = 260, pd = 36, sc = Math.min((W - 2 * pd) / (maxx - minx), (H - 2 * pd) / maxy);
+    const T = ([x, y]) => [pd + (x - minx) * sc + ((W - 2 * pd) - (maxx - minx) * sc) / 2, H - pd - y * sc];
+    const Q = P.map(T), cen = [(Q[0][0] + Q[1][0] + Q[2][0]) / 3, (Q[0][1] + Q[1][1] + Q[2][1]) / 3];
+    const off = (p, d = 16) => { const dx = p[0] - cen[0], dy = p[1] - cen[1], l = Math.hypot(dx, dy) || 1; return [p[0] + dx / l * d, p[1] + dy / l * d]; };
+    const mid = (i, j) => off([(Q[i][0] + Q[j][0]) / 2, (Q[i][1] + Q[j][1]) / 2], 14);
+    let svg = `<svg viewBox="0 0 ${W} ${H}" class="chart-svg" role="img" aria-label="Triangle drawn to scale"><polygon points="${Q.map(p => p.join(',')).join(' ')}" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:2.5;stroke-linejoin:round"/>`;
+    [['A', A], ['B', B], ['C', C]].forEach(([l, ang], i) => { const p = off(Q[i], 18); svg += `<text x="${p[0]}" y="${p[1] + 4}" text-anchor="middle" class="lbl">${l} ${num(ang, 1)}°</text>`; });
+    [['a', a, 1, 2], ['b', b, 0, 2], ['c', c, 0, 1]].forEach(([l, len, i, j]) => { const p = mid(i, j); svg += `<text x="${p[0]}" y="${p[1] + 4}" text-anchor="middle" class="tick">${l} = ${num(len, 3)}</text>`; });
+    svg += '</svg>';
+    return {
+      primary: {label: 'Area', value: num(area, 6), sub: `<span class="pill">${kind}</span>`},
+      charts: [{type: 'custom', html: svg}],
+      stats: [{label: 'Sides a · b · c', value: `${num(a, 4)} · ${num(b, 4)} · ${num(c, 4)}`}, {label: 'Angles A · B · C', value: `${num(A, 2)}° · ${num(B, 2)}° · ${num(C, 2)}°`}, {label: 'Perimeter', value: num(2 * s, 6)}],
+      rows: [['Height to side a', num(2 * area / a, 5)], ['Height to side b', num(2 * area / b, 5)], ['Height to side c', num(2 * area / c, 5)], ['Inradius', num(area / s, 5)], ['Circumradius', num(a * b * c / (4 * area), 5)]]
+    };
+  }},
+{ id: 'random', name: 'Random Number', cat: 'math', kw: 'random number generator dice lottery pick',
+  desc: 'Random integers or decimals in a range, with or without repeats.',
+  fields: [
+    {type: 'row', fields: [{id: 'min', label: 'Min', type: 'num', value: 1}, {id: 'max', label: 'Max', type: 'num', value: 100}]},
+    {id: 'count', label: 'How many', type: 'num', value: 6, range: [1, 50, 1]},
+    {id: 'kind', label: 'Type', type: 'seg', value: 'int', options: [['int', 'Whole numbers'], ['dec', 'Decimals']]},
+    {id: 'dp', label: 'Decimal places', type: 'num', value: 2, show: v => v.kind === 'dec'},
+    {id: 'unique', label: 'No repeats', type: 'check', value: true},
+    {id: 'sort', label: 'Sort results', type: 'check', value: false},
+    {id: 'go', label: 'Generate again', type: 'button'}
+  ],
+  compute(v) {
+    const lo = Math.min(v.min, v.max), hi = Math.max(v.min, v.max), n = clamp(Math.round(v.count), 1, 500), rnd = () => crypto.getRandomValues(new Uint32Array(1))[0] / 2 ** 32;
+    const out = [];
+    if (v.kind === 'int') {
+      const a = Math.ceil(lo), b = Math.floor(hi), size = b - a + 1; if (size < 1) return {error: 'No whole numbers fall in that range.'};
+      if (v.unique && n > size) return {error: `Only ${size} different whole numbers exist in that range.`};
+      const seen = new Set(); while (out.length < n) { const x = a + Math.floor(rnd() * size); if (v.unique && seen.has(x)) continue; seen.add(x); out.push(x); }
+    } else { const dp = clamp(Math.round(v.dp), 0, 10); while (out.length < n) out.push(+(lo + rnd() * (hi - lo)).toFixed(dp)); }
+    if (v.sort) out.sort((x, y) => x - y);
+    return {
+      primary: {label: n === 1 ? 'Your number' : `${n} numbers between ${num(lo, 4)} and ${num(hi, 4)}`, value: n === 1 ? num(out[0], 10) : `<div class="chips" style="margin-top:6px">${out.map(x => `<span class="chip">${num(x, 10)}</span>`).join('')}</div>`},
+      stats: n > 1 ? [{label: 'Sum', value: num(sum(out), 6)}, {label: 'Average', value: num(sum(out) / n, 4)}] : [],
+      notes: 'Generated with the browser\'s cryptographic random source.'
+    };
+  }},
+
+/* ---------- OTHER ---------- */
+{ id: 'age', name: 'Age', cat: 'other', kw: 'age birthday born how old',
+  desc: 'Exact age in years, months and days, plus totals and your next birthday.',
+  fields: [{id: 'dob', label: 'Date of birth', type: 'date', value: '1991-06-15'}, {id: 'asof', label: 'Age on', type: 'date', value: () => todayISO()}],
+  compute(v) {
+    const a = D(v.dob), b = D(v.asof); if (!a || !b) return {error: 'Choose both dates.'}; if (b < a) return {error: 'The “age on” date is before the birth date.'};
+    const {y, m, d} = ymdDiff(a, b), days = daysBetween(a, b);
+    let nb = new Date(Date.UTC(b.getUTCFullYear(), a.getUTCMonth(), a.getUTCDate())); if (nb < b) nb = new Date(Date.UTC(b.getUTCFullYear() + 1, a.getUTCMonth(), a.getUTCDate()));
+    const until = daysBetween(b, nb), z = ['Capricorn', 'Aquarius', 'Pisces', 'Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn'], cut = [20, 19, 21, 20, 21, 21, 23, 23, 23, 23, 22, 22];
+    const mo = a.getUTCMonth(), sign = a.getUTCDate() < cut[mo] ? z[mo] : z[mo + 1];
+    return {
+      primary: {label: 'Age', value: `${y} <small>years</small> ${m} <small>months</small> ${d} <small>days</small>`, sub: `Born on a ${a.toLocaleDateString('en-US', {timeZone: 'UTC', weekday: 'long'})}`},
+      stats: [{label: 'Next birthday', value: until === 0 ? 'Today 🎂'.replace(' 🎂', '') : `In ${plural(until, 'day')}`}, {label: 'Turning', value: String(y + (until === 0 ? 0 : 1))}, {label: 'Star sign', value: sign}],
+      rows: [['Total months', num(y * 12 + m, 0)], ['Total weeks', `${num(Math.floor(days / 7), 0)} weeks ${days % 7} days`], ['Total days', num(days, 0)], ['Total hours', num(days * 24, 0)], ['Total minutes', num(days * 1440, 0)]]
+    };
+  }},
+{ id: 'date', name: 'Date', cat: 'other', kw: 'days between dates add subtract business days countdown',
+  desc: 'Count days between two dates (including business days), or add and subtract time from a date.',
+  fields: [
+    {id: 'mode', label: 'Mode', type: 'seg', value: 'between', options: [['between', 'Days between'], ['add', 'Add or subtract']]},
+    {id: 'start', label: 'Start date', type: 'date', value: () => todayISO()},
+    {id: 'end', label: 'End date', type: 'date', value: () => shiftISO(100), show: v => v.mode === 'between'},
+    {id: 'incl', label: 'Include the end day', type: 'check', value: false, show: v => v.mode === 'between'},
+    {id: 'op', label: 'Operation', type: 'seg', value: '+', show: v => v.mode === 'add', options: [['+', 'Add'], ['-', 'Subtract']]},
+    {type: 'row', fields: [{id: 'ay', label: 'Years', type: 'num', value: 0, show: v => v.mode === 'add'}, {id: 'am', label: 'Months', type: 'num', value: 3, show: v => v.mode === 'add'}]},
+    {type: 'row', fields: [{id: 'aw', label: 'Weeks', type: 'num', value: 0, show: v => v.mode === 'add'}, {id: 'ad', label: 'Days', type: 'num', value: 10, show: v => v.mode === 'add'}]},
+    {id: 'bizonly', label: 'Count days as business days', type: 'check', value: false, show: v => v.mode === 'add'}
+  ],
+  compute(v) {
+    const a = D(v.start); if (!a) return {error: 'Choose a start date.'};
+    if (v.mode === 'between') {
+      let b = D(v.end); if (!b) return {error: 'Choose an end date.'};
+      const inc = v.incl ? 1 : 0, total = daysBetween(a, b) + (b >= a ? inc : -inc), [lo, hi] = a <= b ? [a, b] : [b, a], {y, m, d} = ymdDiff(lo, addDays(hi, inc));
+      const biz = businessDays(lo, addDays(hi, inc));
+      return {
+        primary: {label: 'Days between', value: num(Math.abs(total), 0) + ' <small>days</small>', sub: `${fmtDate(a)} → ${fmtDate(b)}`},
+        stats: [{label: 'Business days (Mon–Fri)', value: num(biz, 0)}, {label: 'Weekend days', value: num(Math.abs(total) - biz, 0)}, {label: 'Weeks', value: `${Math.floor(Math.abs(total) / 7)} wk ${Math.abs(total) % 7} d`}, {label: 'Years, months, days', value: `${y}y ${m}m ${d}d`}],
+        rows: [['Hours', num(Math.abs(total) * 24, 0)], ['Minutes', num(Math.abs(total) * 1440, 0)], ['Percent of a year', pct(Math.abs(total) / 365.2425 * 100, 2)]],
+        notes: 'Business days exclude weekends only; public holidays vary by country and are not removed.'
+      };
+    }
+    const s = v.op === '+' ? 1 : -1; let r = addMonths(a, s * (v.ay * 12 + v.am));
+    if (v.bizonly) { r = addDays(r, s * v.aw * 7); let left = Math.abs(v.ad); while (left > 0) { r = addDays(r, s); const wd = r.getUTCDay(); if (wd && wd !== 6) left--; } }
+    else r = addDays(r, s * (v.aw * 7 + v.ad));
+    return {
+      primary: {label: 'Resulting date', value: fmtDate(r), sub: `${num(Math.abs(daysBetween(a, r)), 0)} calendar days ${s > 0 ? 'after' : 'before'} ${fmtDate(a, false)}`},
+      stats: [{label: 'Day of year', value: String(daysBetween(new Date(Date.UTC(r.getUTCFullYear(), 0, 1)), r) + 1)}, {label: 'ISO date', value: isoOf(r)}, {label: 'From today', value: (() => { const k = daysBetween(D(todayISO()), r); return k === 0 ? 'Today' : `${plural(Math.abs(k), 'day')} ${k > 0 ? 'ahead' : 'ago'}`; })()}]
+    };
+  }},
+{ id: 'hours', name: 'Hours & Timesheet', cat: 'other', kw: 'time card hours worked shift duration pay overtime',
+  desc: 'Hours worked between two times, minus breaks, with pay and overtime.',
+  fields: [
+    {type: 'row', fields: [{id: 'start', label: 'Start', type: 'time', value: '08:45'}, {id: 'end', label: 'End', type: 'time', value: '17:30'}]},
+    {id: 'brk', label: 'Unpaid break', type: 'num', suffix: 'min', value: 30},
+    {id: 'days', label: 'Days per week', type: 'num', value: 5, range: [1, 7, 1]},
+    {type: 'row', fields: [{id: 'rate', label: 'Hourly rate', type: 'num', prefix: '$', value: 28, optional: true}, {id: 'ot', label: 'Overtime after', type: 'num', suffix: 'h/wk', value: 40}]}
+  ],
+  compute(v) {
+    const t = s => { const m = /^(\d{1,2}):(\d{2})/.exec(s || ''); return m ? +m[1] * 60 + +m[2] : NaN; };
+    let a = t(v.start), b = t(v.end); if (!fin(a) || !fin(b)) return {error: 'Enter start and end times.'};
+    let mins = b - a; const overnight = mins < 0; if (overnight) mins += 1440; mins -= v.brk || 0; if (mins <= 0) return {error: 'The break is longer than the shift.'};
+    const h = mins / 60, wk = h * v.days, otH = Math.max(0, wk - v.ot), pay = fin(v.rate) ? (wk - otH) * v.rate + otH * v.rate * 1.5 : NaN;
+    return {
+      primary: {label: 'Hours per shift', value: `${Math.floor(mins / 60)}<small>h</small> ${pad(Math.round(mins % 60))}<small>m</small>`, sub: `${num(h, 2)} decimal hours${overnight ? ' · overnight shift' : ''}`},
+      stats: [{label: 'Hours per week', value: num(wk, 2)}, {label: 'Overtime hours', value: num(otH, 2), tone: otH ? 'warn' : ''}, {label: 'Weekly pay', value: money(pay)}, {label: 'Annual (52 wks)', value: money0(pay * 52)}],
+      notes: 'Overtime is paid at 1.5× for hours over the weekly threshold.'
+    };
+  }},
+{ id: 'gpa', name: 'GPA', cat: 'other', kw: 'grade point average college school credits semester',
+  desc: 'Semester and cumulative GPA from your courses, credits and letter grades.', mount: mountGPA },
+{ id: 'password', name: 'Password Generator', cat: 'other', kw: 'password generator secure random strong entropy',
+  desc: 'Strong random passwords with a strength estimate, generated on your device.', mount: mountPassword },
+{ id: 'subnet', name: 'IP Subnet', cat: 'other', kw: 'ip subnet cidr network mask broadcast hosts ipv4',
+  desc: 'Network, broadcast, host range and mask for any IPv4 address and prefix.',
+  fields: [
+    {id: 'ip', label: 'IP address', type: 'text1', value: '192.168.10.37'},
+    {id: 'prefix', label: 'Prefix', type: 'select', value: '24', options: Array.from({length: 32}, (_, i) => { const p = 32 - i, m = p ? (0xFFFFFFFF << (32 - p)) >>> 0 : 0; return [String(p), `/${p} — ${[24, 16, 8, 0].map(s => (m >>> s) & 255).join('.')}`]; })}
+  ],
+  compute(v) {
+    const parts = String(v.ip).trim().split('.'); if (parts.length !== 4 || parts.some(p => !/^\d{1,3}$/.test(p) || +p > 255)) return {error: 'Enter an IPv4 address like 10.0.0.1.'};
+    const ip = parts.reduce((a, p) => (a * 256 + +p) >>> 0, 0), p = +v.prefix, mask = p ? (0xFFFFFFFF << (32 - p)) >>> 0 : 0;
+    const net = (ip & mask) >>> 0, bc = (net | (~mask >>> 0)) >>> 0, q = n => [24, 16, 8, 0].map(s => (n >>> s) & 255).join('.');
+    const hosts = p >= 31 ? (p === 32 ? 1 : 2) : 2 ** (32 - p) - 2, first = p >= 31 ? net : net + 1, last = p >= 31 ? bc : bc - 1, o = ip >>> 24;
+    const cls = o < 128 ? 'A' : o < 192 ? 'B' : o < 224 ? 'C' : o < 240 ? 'D (multicast)' : 'E (reserved)';
+    const inR = (base, bits) => ((ip & (bits ? (0xFFFFFFFF << (32 - bits)) >>> 0 : 0)) >>> 0) === base;
+    const type = inR(0x0A000000, 8) || inR(0xAC100000, 12) || inR(0xC0A80000, 16) ? 'Private' : inR(0x7F000000, 8) ? 'Loopback' : inR(0xA9FE0000, 16) ? 'Link-local' : inR(0x64400000, 10) ? 'Carrier-grade NAT' : o >= 224 ? 'Multicast / reserved' : 'Public';
+    const bin = n => [24, 16, 8, 0].map(s => ((n >>> s) & 255).toString(2).padStart(8, '0')).join('.');
+    return {
+      primary: {label: 'Network', value: `${q(net)}<small>/${p}</small>`, sub: `<span class="pill ${type === 'Public' ? 'warn' : 'good'}">${type}</span> Class ${cls}`},
+      stats: [{label: 'Usable hosts', value: num(hosts, 0)}, {label: 'Host range', value: `${q(first)} – ${q(last)}`}, {label: 'Broadcast', value: q(bc)}, {label: 'Subnet mask', value: q(mask)}],
+      rows: [['Wildcard mask', q(~mask >>> 0)], ['Total addresses', num(2 ** (32 - p), 0)], ['IP in binary', bin(ip)], ['Mask in binary', bin(mask)], ['IP as integer', String(ip)], ['IP in hex', '0x' + ip.toString(16).toUpperCase().padStart(8, '0')], ['Reverse DNS zone', parts.slice(0, Math.max(1, Math.floor(p / 8))).reverse().join('.') + '.in-addr.arpa']]
+    };
+  }},
+{ id: 'concrete', name: 'Concrete', cat: 'other', kw: 'concrete slab footing column bags cubic yards volume',
+  desc: 'Concrete volume and premix bag counts for slabs, footings and round columns.',
+  fields: [
+    {id: 'cu', label: 'Units', type: 'seg', value: 'us', options: [['us', 'US (ft, in)'], ['metric', 'Metric (m, cm)']]},
+    {id: 'shape', label: 'Shape', type: 'seg', value: 'slab', options: [['slab', 'Slab / footing'], ['col', 'Round column']]},
+    {type: 'row', fields: [
+      {id: 'len', label: 'Length', type: 'num', suffix: v => v.cu === 'us' ? 'ft' : 'm', value: 12, show: v => v.shape === 'slab'},
+      {id: 'wid', label: 'Width', type: 'num', suffix: v => v.cu === 'us' ? 'ft' : 'm', value: 10, show: v => v.shape === 'slab'}]},
+    {id: 'thk', label: 'Thickness', type: 'num', suffix: v => v.cu === 'us' ? 'in' : 'cm', value: 4, show: v => v.shape === 'slab'},
+    {type: 'row', fields: [
+      {id: 'dia', label: 'Diameter', type: 'num', suffix: v => v.cu === 'us' ? 'in' : 'cm', value: 12, show: v => v.shape === 'col'},
+      {id: 'ht', label: 'Height', type: 'num', suffix: v => v.cu === 'us' ? 'ft' : 'm', value: 4, show: v => v.shape === 'col'}]},
+    {type: 'row', fields: [{id: 'qty', label: 'Quantity', type: 'num', value: 1}, {id: 'waste', label: 'Extra for waste', type: 'num', suffix: '%', value: 10}]}
+  ],
+  compute(v) {
+    const us = v.cu === 'us'; let m3;
+    if (v.shape === 'slab') m3 = us ? v.len * 0.3048 * v.wid * 0.3048 * v.thk * 0.0254 : v.len * v.wid * v.thk / 100;
+    else { const r = (us ? v.dia * 0.0254 : v.dia / 100) / 2; m3 = Math.PI * r * r * (us ? v.ht * 0.3048 : v.ht); }
+    m3 *= Math.max(0, v.qty) * (1 + v.waste / 100);
+    const yd3 = m3 * 1.30795, ft3 = m3 * 35.3147;
+    const bags = us ? [['80 lb bags', 0.6], ['60 lb bags', 0.45], ['40 lb bags', 0.3]].map(([l, y]) => ({label: l, value: Math.ceil(ft3 / y)})) : [['25 kg bags', 0.012], ['20 kg bags', 0.0096]].map(([l, y]) => ({label: l, value: Math.ceil(m3 / y)}));
+    return {
+      primary: {label: 'Concrete needed', value: us ? `${num(yd3, 2)} <small>yd³</small>` : `${num(m3, 3)} <small>m³</small>`, sub: `${num(ft3, 1)} ft³ · ${num(m3, 3)} m³ · includes ${num(v.waste, 0)}% extra`},
+      charts: [{type: 'custom', heading: 'Or in premix bags', html: hbarsHTML(bags.map((b, i) => ({...b, text: num(b.value, 0) + ' bags', color: ['var(--c2)', 'var(--c1)', 'var(--c3)'][i]})))}],
+      notes: `Above about ${us ? '1 cubic yard' : '0.75 m³'}, ready-mix delivery is usually cheaper than bags. Bag yields are typical; check the label on the brand you buy.`
+    };
+  }},
+{ id: 'convert', name: 'Unit Converter', cat: 'other', kw: 'conversion convert units length weight temperature volume area speed data energy pressure', full: true,
+  desc: 'Convert between 90+ units in ten categories, with every equivalent shown at once.', mount: mountConvert }
+];
+const byId = Object.fromEntries(CALCS.map(c => [c.id, c]));
+
+/* ====================== Field engine ====================== */
+function walk(fields, cb) { (fields || []).forEach(f => f.type === 'row' ? walk(f.fields, cb) : cb(f)); }
+let vals = store.get('vals', {}), shared = store.get('shared', {}), favs = store.get('favs', []), recent = store.get('recent', []);
+let saveT; const saveVals = () => { clearTimeout(saveT); saveT = setTimeout(() => { store.set('vals', vals); store.set('shared', shared); }, 300); };
+function initVals(calc, reset) {
+  if (reset || !vals[calc.id]) vals[calc.id] = {};
+  const r = vals[calc.id];
+  walk(calc.fields, f => {
+    if (!f.id || f.type === 'button') return;
+    if (f.shared && shared[f.shared] !== undefined && !reset) r[f.id] = shared[f.shared];
+    else if (r[f.id] === undefined) r[f.id] = typeof f.value === 'function' ? f.value() : f.value;
+  });
+  return r;
+}
+function parsed(calc) { const r = vals[calc.id], o = {}; walk(calc.fields, f => { if (!f.id) return; o[f.id] = f.type === 'num' ? toNum(r[f.id]) : r[f.id]; }); return o; }
+const sfx = (f, v) => typeof f.suffix === 'function' ? f.suffix(v) : (f.suffix || '');
+function fieldHTML(f, r, v) {
+  const id = 'f_' + f.id, val = r[f.id], hint = f.hint ? `<div class="hint">${f.hint}</div>` : '';
+  const wrap = inner => `<div class="field" data-f="${f.id}">${inner}</div>`;
+  switch (f.type) {
+    case 'num': return wrap(`<label for="${id}">${f.label}</label><div class="inp">${f.prefix ? `<span class="affix">${f.prefix}</span>` : ''}<input id="${id}" type="text" inputmode="decimal" autocomplete="off" value="${esc(f.prefix === '$' ? fmtMoneyInput(val) : val)}">${f.suffix ? `<span class="affix" data-sfx>${sfx(f, v)}</span>` : ''}</div>${f.range ? `<input type="range" id="r_${f.id}" aria-label="${esc(f.label)} slider" min="${f.range[0]}" max="${f.range[1]}" step="${f.range[2]}" value="${esc(toNum(val))}">` : ''}${hint}`);
+    case 'text1': return wrap(`<label for="${id}">${f.label}</label><div class="inp text"><input id="${id}" type="text" autocomplete="off" spellcheck="false" placeholder="${esc(f.ph || '')}" value="${esc(val)}"></div>${hint}`);
+    case 'text': return wrap(`<label for="${id}">${f.label}</label><div class="inp"><textarea id="${id}" spellcheck="false">${esc(val)}</textarea></div>${hint}`);
+    case 'date': case 'time': return wrap(`<label for="${id}">${f.label}</label><div class="inp"><input id="${id}" type="${f.type}" value="${esc(val)}"></div>${hint}`);
+    case 'select': return wrap(`<label for="${id}">${f.label}</label><div class="inp"><select id="${id}">${f.options.map(([o, l]) => `<option value="${esc(o)}" ${String(o) === String(val) ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></div>${hint}`);
+    case 'seg': return wrap(`<span class="flabel" id="${id}-l">${f.label}</span><div class="seg" role="radiogroup" aria-labelledby="${id}-l" id="${id}">${f.options.map(([o, l]) => `<button type="button" role="radio" data-val="${esc(o)}" aria-checked="${String(o) === String(val)}">${esc(l)}</button>`).join('')}</div>${hint}`);
+    case 'check': return wrap(`<label class="check"><input type="checkbox" id="${id}" ${val ? 'checked' : ''}><span>${f.label}</span></label>`);
+    case 'button': return wrap(`<button type="button" class="btn" data-action="${f.id}">${I.dice}${f.label}</button>`);
+  }
+  return '';
+}
+function fmtMoneyInput(v) { const n = toNum(v); return fin(n) ? n.toLocaleString('en-US', {maximumFractionDigits: 2}) : (v ?? ''); }
+function fieldsHTML(fields, r, v) { return fields.map(f => f.type === 'row' ? `<div class="frow">${fieldsHTML(f.fields, r, v)}</div>` : fieldHTML(f, r, v)).join(''); }
+
+let current = null, lastResult = null, openDetails = store.get('details', {});
+function renderFieldCalc(calc, body) {
+  const r = initVals(calc), v = parsed(calc);
+  body.innerHTML = `<form class="panel inputs" id="calcForm" autocomplete="off" onsubmit="return false"><div class="inputs-title">Inputs</div>${fieldsHTML(calc.fields, r, v)}</form><section class="results" id="results" aria-live="polite"></section>`;
+  const form = $('#calcForm', body), fmap = {}; walk(calc.fields, f => f.id && (fmap[f.id] = f));
+  const update = (f, value) => {
+    r[f.id] = value; if (f.shared) shared[f.shared] = value;
+    if (f.effect) { f.effect(r, calc); walk(calc.fields, g => g.shared && (shared[g.shared] = r[g.id])); syncInputs(calc, form); }
+    saveVals(); applyShow(calc, form); recompute(calc);
+  };
+  form.addEventListener('input', e => {
+    const t = e.target, w = t.closest('[data-f]'); if (!w) return; const f = fmap[w.dataset.f];
+    if (t.type === 'range') { const inp = $('#f_' + f.id, form); inp.value = f.prefix === '$' ? fmtMoneyInput(t.value) : t.value; update(f, t.value); return; }
+    if (t.type === 'checkbox') return update(f, t.checked);
+    if (f.range) { const rg = $('#r_' + f.id, form), n = toNum(t.value); if (fin(n)) rg.value = n; }
+    update(f, t.value);
+  });
+  form.addEventListener('change', e => { const t = e.target; if (t.tagName === 'SELECT') { const f = fmap[t.closest('[data-f]').dataset.f]; update(f, t.value); } });
+  form.addEventListener('click', e => {
+    const b = e.target.closest('.seg button'); if (b) { const f = fmap[b.closest('[data-f]').dataset.f]; $$('button', b.parentNode).forEach(x => x.setAttribute('aria-checked', x === b)); update(f, b.dataset.val); return; }
+    const a = e.target.closest('[data-action]'); if (a) recompute(calc);
+  });
+  form.addEventListener('focusout', e => { const t = e.target, w = t.closest('[data-f]'); if (!w) return; const f = fmap[w.dataset.f]; if (f && f.prefix === '$' && t.type === 'text') t.value = fmtMoneyInput(t.value); });
+  form.addEventListener('keydown', e => { // arrow keys nudge numbers
+    const t = e.target; if (t.type !== 'text' || !(e.key === 'ArrowUp' || e.key === 'ArrowDown')) return; const w = t.closest('[data-f]'), f = fmap[w.dataset.f]; if (f.type !== 'num') return;
+    const n = toNum(t.value); if (!fin(n)) return; e.preventDefault(); const step = f.range ? f.range[2] : (e.shiftKey ? 10 : 1); const nv = +(n + (e.key === 'ArrowUp' ? step : -step)).toFixed(6);
+    t.value = f.prefix === '$' ? fmtMoneyInput(nv) : nv; if (f.range) $('#r_' + f.id, form).value = nv; update(f, String(nv));
+  });
+  applyShow(calc, form); recompute(calc);
+}
+function syncInputs(calc, form) {
+  const r = vals[calc.id];
+  walk(calc.fields, f => {
+    if (!f.id) return; const el = $('#f_' + f.id, form); if (!el) return;
+    if (f.type === 'seg') $$('button', el).forEach(b => b.setAttribute('aria-checked', b.dataset.val === String(r[f.id])));
+    else if (f.type === 'check') el.checked = !!r[f.id];
+    else if (document.activeElement !== el) el.value = f.prefix === '$' ? fmtMoneyInput(r[f.id]) : r[f.id];
+    const rg = $('#r_' + f.id, form); if (rg && fin(toNum(r[f.id]))) rg.value = toNum(r[f.id]);
+  });
+}
+function applyShow(calc, form) {
+  const v = parsed(calc);
+  walk(calc.fields, f => {
+    if (!f.id) return; const w = $(`[data-f="${f.id}"]`, form); if (!w) return;
+    w.hidden = f.show ? !f.show(v) : false;
+    if (typeof f.suffix === 'function') { const s = $('[data-sfx]', w); if (s) s.textContent = f.suffix(v); }
+  });
+}
+function recompute(calc) {
+  const v = parsed(calc), el = $('#results'); if (!el) return; let err = null;
+  walk(calc.fields, f => { if (err || f.type !== 'num' || f.optional) return; if ((!f.show || f.show(v)) && !fin(v[f.id])) err = `Enter a number for “${(f.err || f.label).trim()}”.`; });
+  let r; try { r = err ? {error: err} : calc.compute(v); } catch (e) { r = {error: e.message || 'Something in the inputs could not be calculated.'}; }
+  renderResults(calc, r, el);
+}
+function renderResults(calc, r, el) {
+  lastResult = {calc, r};
+  if (r.error) { el.innerHTML = `<div class="res-empty"><strong>Waiting on one input</strong>${esc(r.error)}</div>`; return; }
+  const charts = r.charts || (r.chart ? [r.chart] : []);
+  let h = '';
+  if (r.primary) h += `<div class="primary"><div class="p-label">${r.primary.label}</div><div class="p-value">${r.primary.value}</div>${r.primary.sub ? `<div class="p-sub">${r.primary.sub}</div>` : ''}</div>`;
+  const gauge = charts.findIndex(c => c.type === 'gauge');
+  if (gauge >= 0) h += `<div class="card"><div class="chart" data-chart="${gauge}"></div></div>`;
+  if (r.stats && r.stats.length) h += `<div class="stats">${r.stats.map(s => `<div class="stat ${s.tone || ''}"><div class="s-label">${s.label}</div><div class="s-value">${s.value}</div></div>`).join('')}</div>`;
+  charts.forEach((c, i) => { if (c.type !== 'gauge') h += `<div class="card">${c.heading ? `<h4>${esc(c.heading)}</h4>` : ''}<div class="chart" data-chart="${i}"></div></div>`; });
+  if (r.rows && r.rows.length) h += `<div class="card"><dl class="rows">${r.rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl></div>`;
+  if (r.table) { const key = calc.id + ':tbl', open = openDetails[key] ?? !!r.table.open; h += `<details class="tbl" data-key="${key}" ${open ? 'open' : ''}><summary>${esc(r.table.title)}</summary><div class="tbl-wrap"><table><thead><tr>${r.table.head.map(x => `<th>${x}</th>`).join('')}</tr></thead><tbody>${r.table.rows.map(row => `<tr>${row.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div></details>`; }
+  if (r.notes) h += `<div class="notes">${r.notes.startsWith('<') ? r.notes : `<p>${r.notes}</p>`}</div>`;
+  if (calc.formula) { const key = calc.id + ':f'; h += `<details class="formula" data-key="${key}" ${openDetails[key] ? 'open' : ''}><summary>How it's calculated</summary><div class="formula-body">${calc.formula}</div></details>`; }
+  el.innerHTML = h;
+  $$('[data-chart]', el).forEach(c => mountChart(c, charts[+c.dataset.chart]));
+  $$('details[data-key]', el).forEach(d => d.addEventListener('toggle', () => { openDetails[d.dataset.key] = d.open; store.set('details', openDetails); }));
+}
+function resultText() {
+  if (!lastResult || lastResult.r.error) return null; const {calc, r} = lastResult, strip = s => String(s).replace(/<br>/g, ' ').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  const lines = [`${calc.name} — Tally`];
+  if (r.primary) lines.push(`${strip(r.primary.label)}: ${strip(r.primary.value)}`, r.primary.sub ? strip(r.primary.sub) : '');
+  (r.stats || []).forEach(s => lines.push(`${strip(s.label)}: ${strip(s.value)}`));
+  (r.rows || []).forEach(([k, v]) => lines.push(`${strip(k)}: ${strip(v)}`));
+  return lines.filter(Boolean).join('\n');
+}
+
+/* ====================== Scientific calculator ====================== */
+let sciState = {deg: store.get('sciDeg', true), mem: store.get('sciMem', 0), ans: 0, hist: store.get('sciHist', [])};
+const rawNum = n => { const a = Math.abs(n); if (a !== 0 && (a >= 1e15 || a < 1e-9)) { const [m, e] = n.toExponential(11).split('e'); return parseFloat(m) + 'E' + (+e); } return String(parseFloat(n.toPrecision(14))); };
+const showNum = n => { if (typeof n !== 'number' || isNaN(n)) return 'Undefined'; if (!isFinite(n)) return n > 0 ? '∞' : '−∞'; const a = Math.abs(n); if (a !== 0 && (a >= 1e15 || a < 1e-9)) { const [m, e] = n.toExponential(10).split('e'); return `${parseFloat(m)}×10<sup>${+e}</sup>`; } return parseFloat(n.toPrecision(13)).toLocaleString('en-US', {maximumFractionDigits: 12}); };
+function mountScientific(el, pid, compact) {
+  const FN = [
+    ['2nd', '2nd'], ['deg', 'deg'], ['(', '('], [')', ')'], ['%', '%'],
+    ['sin', 'sin(', 'sin⁻¹', 'asin('], ['cos', 'cos(', 'cos⁻¹', 'acos('], ['tan', 'tan(', 'tan⁻¹', 'atan('], ['ln', 'ln(', 'eˣ', 'e^('], ['log', 'log(', '10ˣ', '10^('],
+    ['x²', '^2', 'x³', '^3'], ['xʸ', '^', 'ʸ√x', '^(1/'], ['√', '√(', '∛', '∛('], ['1/x', '^(-1)', '|x|', 'abs('], ['n!', '!', 'sinh', 'sinh('],
+    ['π', 'π'], ['e', 'e'], ['EXP', 'E'], ['Rand', 'rand'], ['Ans', 'ans'],
+    ['MC', 'mc'], ['MR', 'mr'], ['M+', 'm+'], ['M−', 'm-'], ['Copy', 'copy']
+  ];
+  const NM = [['7'], ['8'], ['9'], ['÷', 'op'], ['4'], ['5'], ['6'], ['×', 'op'], ['1'], ['2'], ['3'], ['−', 'op'], ['0'], ['.'], ['±'], ['+', 'op'], ['AC', 'clr'], ['⌫'], ['Ans'], ['=', 'eq']];
+  el.innerHTML = `<div class="sci-wrap" ${compact ? 'style="grid-template-columns:1fr"' : ''}>
+    <div class="sci">
+      <div class="sci-display">
+        <div class="sci-top"><span class="sci-flags"><span data-flag="deg"></span><span data-flag="second">2nd</span><span data-flag="mem">M</span></span><span class="sci-prev"></span></div>
+        <input id="${pid}-expr" class="sci-expr" autocomplete="off" spellcheck="false" aria-label="Expression" placeholder="0" inputmode="none">
+        <div class="sci-result" aria-live="polite">0</div>
+      </div>
+      <div class="sci-pads">
+        <div class="pad fn">${FN.map(([l, k, l2, k2]) => `<button type="button" class="key" data-k="${esc(k)}" ${k2 ? `data-k2="${esc(k2)}" data-l="${esc(l)}" data-l2="${esc(l2)}"` : ''}>${l}</button>`).join('')}</div>
+        <div class="pad nm">${NM.map(([l, c]) => `<button type="button" class="key ${c || (/\d/.test(l) || l === '.' ? 'd' : '')}" data-k="${esc(l)}">${l}</button>`).join('')}</div>
+      </div>
+    </div>
+    ${compact ? '' : `<div class="sci-side"><div class="hist"><div class="hist-head">History<button type="button" data-clear>Clear</button></div><div class="hist-list"></div></div>
+      <div class="tips">Type straight from the keyboard. <code>Enter</code> evaluates, <code>Esc</code> clears. Write <code>2pi</code>, <code>3(4+1)</code>, <code>sqrt(2)</code>, <code>5!</code> or <code>2^10</code>. Click a history line to reuse it.</div></div>`}
+  </div>`;
+  const inp = $('.sci-expr', el), res = $('.sci-result', el), prev = $('.sci-prev', el); let second = false, just = false;
+  const scope = () => ({__deg: sciState.deg, ans: sciState.ans});
+  const flags = () => { const d = $('[data-flag=deg]', el); d.textContent = sciState.deg ? 'DEG' : 'RAD'; d.classList.add('lit'); $('[data-flag=second]', el).classList.toggle('lit', second); $('[data-flag=second]', el).style.opacity = second ? 1 : .45; const m = $('[data-flag=mem]', el); m.classList.toggle('lit', sciState.mem !== 0); m.style.opacity = sciState.mem !== 0 ? 1 : .45; $('[data-k=deg]', el).textContent = sciState.deg ? 'Deg' : 'Rad'; $('[data-k="2nd"]', el).classList.toggle('lit', second); $$('[data-k2]', el).forEach(b => b.textContent = second ? b.dataset.l2 : b.dataset.l); };
+  const preview = () => { const s = inp.value.trim(); res.classList.remove('err'); if (!s) { res.innerHTML = '0'; res.classList.remove('preview'); return; } try { const v = Expr.evaluate(s, scope()); res.innerHTML = showNum(v); res.classList.add('preview'); } catch (e) { res.classList.add('preview'); } };
+  const histRender = () => { const l = $('.hist-list', el); if (!l) return; l.innerHTML = sciState.hist.length ? sciState.hist.map((h, i) => `<button type="button" class="hist-item" data-h="${i}"><div class="he">${esc(h.e)}</div><div class="hr">${showNum(h.v)}</div></button>`).join('') : '<div class="hist-empty">Results you calculate appear here.</div>'; };
+  const insert = text => {
+    if (just) { inp.value = /^[+\-−×÷^!%*/)]/.test(text) || text.startsWith('^') ? rawNum(sciState.ans) : ''; just = false; }
+    const s = inp.selectionStart ?? inp.value.length, e = inp.selectionEnd ?? inp.value.length;
+    inp.value = inp.value.slice(0, s) + text + inp.value.slice(e); const pos = s + text.length; inp.setSelectionRange(pos, pos); preview();
+  };
+  const evaluate = () => {
+    const s = inp.value.trim(); if (!s) return;
+    try { const v = Expr.evaluate(s, scope()); if (typeof v !== 'number') throw Error('Not a number');
+      sciState.ans = v; prev.textContent = s + ' ='; res.classList.remove('preview', 'err'); res.innerHTML = showNum(v); just = true;
+      if (!sciState.hist[0] || sciState.hist[0].e !== s) { sciState.hist.unshift({e: s, v}); sciState.hist = sciState.hist.slice(0, 40); store.set('sciHist', sciState.hist); }
+      document.querySelectorAll('.sci-wrap').forEach(() => {}); histRender();
+    } catch (e) { res.classList.remove('preview'); res.classList.add('err'); res.textContent = e.message; }
+  };
+  const current = () => { try { return inp.value.trim() ? Expr.evaluate(inp.value, scope()) : sciState.ans; } catch (e) { return NaN; } };
+  const press = (k, b) => {
+    if (b && b.dataset.k2 && second) { k = b.dataset.k2; second = false; flags(); }
+    switch (k) {
+      case '2nd': second = !second; flags(); break;
+      case 'deg': sciState.deg = !sciState.deg; store.set('sciDeg', sciState.deg); flags(); preview(); break;
+      case 'AC': inp.value = ''; prev.textContent = ''; just = false; preview(); break;
+      case '⌫': if (just) { just = false; } { const s = inp.selectionStart, e = inp.selectionEnd; if (s !== e) { inp.value = inp.value.slice(0, s) + inp.value.slice(e); inp.setSelectionRange(s, s); } else if (s > 0) { const m = /(asin|acos|atan|sinh|sin|cos|tan|log|ln|abs|√|∛)\($/.exec(inp.value.slice(0, s)); const n = m ? m[0].length : 1; inp.value = inp.value.slice(0, s - n) + inp.value.slice(s); inp.setSelectionRange(s - n, s - n); } } preview(); break;
+      case '=': evaluate(); break;
+      case '±': { const s = just ? rawNum(sciState.ans) : inp.value; just = false; inp.value = /^-\(.*\)$/.test(s) ? s.slice(2, -1) : s ? `-(${s})` : '-'; preview(); } break;
+      case 'rand': insert(String(+Math.random().toFixed(8))); break;
+      case 'mc': sciState.mem = 0; store.set('sciMem', 0); flags(); break;
+      case 'mr': insert(rawNum(sciState.mem)); break;
+      case 'm+': case 'm-': { const v = current(); if (fin(v)) { sciState.mem += k === 'm+' ? v : -v; store.set('sciMem', sciState.mem); flags(); toast(`Memory: ${rawNum(sciState.mem)}`); } } break;
+      case 'copy': { const v = just ? sciState.ans : current(); if (fin(v)) copyText(rawNum(v), 'Result copied'); } break;
+      case 'Ans': case 'ans': insert('ans'); break;
+      default: insert(k);
+    }
+  };
+  el.addEventListener('click', e => {
+    const b = e.target.closest('.key'); if (b) { press(b.dataset.k, b); if (matchMedia('(pointer:fine)').matches) inp.focus(); return; }
+    const h = e.target.closest('[data-h]'); if (h) { const it = sciState.hist[+h.dataset.h]; inp.value = it.e; just = false; prev.textContent = ''; preview(); inp.focus(); return; }
+    if (e.target.closest('[data-clear]')) { sciState.hist = []; store.set('sciHist', []); histRender(); }
+  });
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); evaluate(); return; }
+    if (e.key === 'Escape') { e.preventDefault(); press('AC'); return; }
+    if (just && e.key.length === 1 && !e.ctrlKey && !e.metaKey) { e.preventDefault(); insert(e.key === '*' ? '×' : e.key === '/' ? '÷' : e.key); }
+  });
+  inp.addEventListener('input', () => { just = false; preview(); });
+  flags(); histRender(); preview();
+  return inp;
+}
+
+/* ====================== GPA ====================== */
+const GRADES = [['A+', 4], ['A', 4], ['A-', 3.7], ['B+', 3.3], ['B', 3], ['B-', 2.7], ['C+', 2.3], ['C', 2], ['C-', 1.7], ['D+', 1.3], ['D', 1], ['D-', 0.7], ['F', 0]];
+function mountGPA(body) {
+  let st = store.get('gpa', null) || {rows: [{n: 'Calculus I', c: 4, g: 'A-'}, {n: 'Intro to Psychology', c: 3, g: 'B+'}, {n: 'English Composition', c: 3, g: 'A'}, {n: 'Chemistry Lab', c: 1, g: 'B'}, {n: 'Macroeconomics', c: 3, g: 'B+'}], prior: 3.42, priorC: 45, target: 3.6};
+  body.innerHTML = `<div class="panel inputs" style="position:static"><div class="inputs-title">This term's courses</div><div class="gpa-head"><span>Course</span><span>Credits</span><span>Grade</span><span></span></div><div class="gpa-rows" id="gpaRows"></div>
+    <button type="button" class="btn" id="gpaAdd">${I.plus}Add course</button>
+    <div class="inputs-title" style="margin-top:6px">Previous terms (optional)</div>
+    <div class="frow"><div class="field"><label for="gpaPrior">Current GPA</label><div class="inp"><input id="gpaPrior" inputmode="decimal" value="${st.prior}"></div></div><div class="field"><label for="gpaPriorC">Credits earned</label><div class="inp"><input id="gpaPriorC" inputmode="decimal" value="${st.priorC}"></div></div></div>
+    <div class="field"><label for="gpaTarget">Target cumulative GPA</label><div class="inp"><input id="gpaTarget" inputmode="decimal" value="${st.target}"></div></div>
+  </div><section class="results" id="results" aria-live="polite"></section>`;
+  const rowsEl = $('#gpaRows', body);
+  const drawRows = () => rowsEl.innerHTML = st.rows.map((r, i) => `<div class="gpa-row" data-i="${i}"><div class="inp name"><input aria-label="Course name" data-k="n" value="${esc(r.n)}" placeholder="Course ${i + 1}"></div><div class="inp"><input aria-label="Credits" data-k="c" inputmode="decimal" value="${esc(r.c)}"></div><div class="inp"><select aria-label="Grade" data-k="g">${GRADES.map(([g]) => `<option ${g === r.g ? 'selected' : ''}>${g}</option>`).join('')}</select></div><button type="button" class="del" aria-label="Remove course" data-del>${I.x}</button></div>`).join('');
+  const calc = () => {
+    store.set('gpa', st);
+    const pts = g => GRADES.find(x => x[0] === g)[1], rows = st.rows.filter(r => toNum(r.c) > 0), cr = sum(rows.map(r => toNum(r.c))), qp = sum(rows.map(r => toNum(r.c) * pts(r.g)));
+    if (!cr) return renderResults(byId.gpa, {error: 'Add at least one course with credits above zero.'}, $('#results'));
+    const gpa = qp / cr, pc = toNum(st.priorC), pg = toNum(st.prior), hasPrior = pc > 0 && fin(pg), cum = hasPrior ? (qp + pg * pc) / (cr + pc) : gpa;
+    const tgt = toNum(st.target), allC = cr + (hasPrior ? pc : 0);
+    let need = ''; if (fin(tgt)) { const credits15 = 15, req = (tgt * (allC + credits15) - cum * allC) / credits15; need = req > 4 ? `Not reachable next term with 15 credits (would need ${num(req, 2)})` : req <= 0 ? 'Already above target' : `${num(req, 2)} GPA over 15 credits next term`; }
+    const dist = {}; rows.forEach(r => { const L = r.g[0]; dist[L] = (dist[L] || 0) + toNum(r.c); });
+    renderResults(byId.gpa, {
+      primary: {label: 'Term GPA', value: num(gpa, 3), sub: `${num(cr, 1)} credits · ${num(qp, 1)} quality points`},
+      stats: [{label: 'Cumulative GPA', value: num(cum, 3), tone: cum >= 3.5 ? 'good' : cum < 2 ? 'bad' : ''}, {label: 'Total credits', value: num(allC, 1)}, {label: 'To reach target', value: need || '—'}],
+      charts: [{type: 'custom', heading: 'Credits by letter grade', html: hbarsHTML(['A', 'B', 'C', 'D', 'F'].filter(L => dist[L]).map((L, i) => ({label: L + ' grades', value: dist[L], text: num(dist[L], 1) + ' cr', color: ['var(--good)', 'var(--c1)', 'var(--warn)', 'var(--c4)', 'var(--bad)'][['A', 'B', 'C', 'D', 'F'].indexOf(L)]})))}],
+      notes: 'Uses the common 4.0 scale (A+ counts as 4.0). Some schools weight A+ as 4.3; check your registrar.'
+    }, $('#results'));
+  };
+  drawRows(); calc();
+  rowsEl.addEventListener('input', e => { const i = +e.target.closest('[data-i]').dataset.i; st.rows[i][e.target.dataset.k] = e.target.value; calc(); });
+  rowsEl.addEventListener('change', e => { if (e.target.tagName === 'SELECT') { st.rows[+e.target.closest('[data-i]').dataset.i].g = e.target.value; calc(); } });
+  rowsEl.addEventListener('click', e => { if (e.target.closest('[data-del]')) { st.rows.splice(+e.target.closest('[data-i]').dataset.i, 1); drawRows(); calc(); } });
+  $('#gpaAdd', body).onclick = () => { st.rows.push({n: '', c: 3, g: 'A'}); drawRows(); calc(); $$('.gpa-row:last-child input', rowsEl)[0].focus(); };
+  [['gpaPrior', 'prior'], ['gpaPriorC', 'priorC'], ['gpaTarget', 'target']].forEach(([id, k]) => $('#' + id, body).addEventListener('input', e => { st[k] = e.target.value; calc(); }));
+}
+
+/* ====================== Password ====================== */
+function mountPassword(body) {
+  const st = Object.assign({len: 20, upper: true, lower: true, digits: true, symbols: true, ambig: true}, store.get('pw', {}));
+  body.innerHTML = `<div class="panel inputs"><div class="inputs-title">Options</div>
+    <div class="field"><label for="pwLen">Length: <b class="mono" id="pwLenV">${st.len}</b> characters</label><input type="range" id="pwLen" min="6" max="64" value="${st.len}"></div>
+    ${[['upper', 'Uppercase (A–Z)'], ['lower', 'Lowercase (a–z)'], ['digits', 'Numbers (0–9)'], ['symbols', 'Symbols (!@#$…)'], ['ambig', 'Avoid look-alikes (0 O l 1 I)']].map(([k, l]) => `<label class="check"><input type="checkbox" id="pw_${k}" data-k="${k}" ${st[k] ? 'checked' : ''}><span>${l}</span></label>`).join('')}
+    <button type="button" class="btn primary" id="pwGo">${I.dice}Generate new</button></div><section class="results" id="results"></section>`;
+  const gen = () => {
+    store.set('pw', st);
+    let sets = [st.upper && 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', st.lower && 'abcdefghijklmnopqrstuvwxyz', st.digits && '0123456789', st.symbols && '!@#$%^&*()-_=+[]{};:,.?/~'].filter(Boolean);
+    if (st.ambig) sets = sets.map(s => s.replace(/[0O1lI|]/g, ''));
+    const res = $('#results', body);
+    if (!sets.length) { lastResult = null; res.innerHTML = '<div class="res-empty"><strong>Pick at least one character type</strong>Turn on uppercase, lowercase, numbers or symbols.</div>'; return; }
+    const pool = sets.join(''), rnd = n => { const a = new Uint32Array(1), lim = Math.floor(2 ** 32 / n) * n; let x; do { crypto.getRandomValues(a); x = a[0]; } while (x >= lim); return x % n; };
+    const make = () => { const ch = sets.map(s => s[rnd(s.length)]); while (ch.length < st.len) ch.push(pool[rnd(pool.length)]); for (let i = ch.length - 1; i > 0; i--) { const j = rnd(i + 1); [ch[i], ch[j]] = [ch[j], ch[i]]; } return ch.slice(0, st.len).join(''); };
+    const list = Array.from({length: 6}, make), bits = st.len * Math.log2(pool.length);
+    const lvl = bits < 40 ? [1, 'Weak', 'bad'] : bits < 64 ? [2, 'Fair', 'warn'] : bits < 90 ? [3, 'Strong', 'good'] : [4, 'Very strong', 'good'];
+    const secs = Math.pow(2, bits - 1) / 1e11, crack = secs < 1 ? 'instantly' : secs < 3600 ? num(secs / 60, 0) + ' minutes' : secs < 86400 * 365 ? num(secs / 86400, 0) + ' days' : secs < 3.15e7 * 1e6 ? compact(secs / 3.15e7) + ' years' : 'longer than the age of the universe';
+    res.innerHTML = `<div class="pw big"><code id="pwMain">${esc(list[0])}</code><button type="button" class="btn" data-copy="0">${I.copy}<span>Copy</span></button></div>
+      <div class="card"><h4>Strength <span><span class="pill ${lvl[2]}">${lvl[1]}</span></span></h4><div class="meter">${[1, 2, 3, 4].map(i => `<i style="${i <= lvl[0] ? `background:var(--${lvl[2]})` : ''}"></i>`).join('')}</div>
+      <dl class="rows" style="margin-top:12px"><dt>Entropy</dt><dd>${num(bits, 1)} bits</dd><dt>Character pool</dt><dd>${pool.length} symbols</dd><dt>Time to crack at 100 billion guesses/s</dt><dd>${crack}</dd></dl></div>
+      <div class="card"><h4>More options</h4><div class="pw-list">${list.slice(1).map((p, i) => `<div class="pw"><code>${esc(p)}</code><button type="button" class="btn" data-copy="${i + 1}" aria-label="Copy password">${I.copy}</button></div>`).join('')}</div></div>
+      <div class="notes">Passwords are created in your browser with a cryptographic random source and never leave this page.</div>`;
+    $$('[data-copy]', res).forEach(b => b.onclick = () => copyText(list[+b.dataset.copy], 'Password copied'));
+    lastResult = null;
+  };
+  $('#pwLen', body).addEventListener('input', e => { st.len = +e.target.value; $('#pwLenV', body).textContent = st.len; gen(); });
+  $$('[data-k]', body).forEach(c => c.addEventListener('change', () => { st[c.dataset.k] = c.checked; gen(); }));
+  $('#pwGo', body).onclick = gen; gen();
+}
+
+/* ====================== Unit converter ====================== */
+const UNITS_DB = {
+  Length: {base: 'm', u: [['mm', 'Millimeter', .001], ['cm', 'Centimeter', .01], ['m', 'Meter', 1], ['km', 'Kilometer', 1000], ['in', 'Inch', .0254], ['ft', 'Foot', .3048], ['yd', 'Yard', .9144], ['mi', 'Mile', 1609.344], ['nmi', 'Nautical mile', 1852], ['µm', 'Micrometer', 1e-6]]},
+  Weight: {u: [['mg', 'Milligram', 1e-6], ['g', 'Gram', .001], ['kg', 'Kilogram', 1], ['t', 'Metric ton', 1000], ['oz', 'Ounce', .028349523125], ['lb', 'Pound', .45359237], ['st', 'Stone', 6.35029318], ['ton', 'US ton', 907.18474], ['ct', 'Carat', .0002]]},
+  Temperature: {temp: true, u: [['°C', 'Celsius'], ['°F', 'Fahrenheit'], ['K', 'Kelvin'], ['°R', 'Rankine']]},
+  Volume: {u: [['mL', 'Milliliter', .001], ['L', 'Liter', 1], ['m³', 'Cubic meter', 1000], ['tsp', 'Teaspoon (US)', .00492892159375], ['tbsp', 'Tablespoon (US)', .01478676478125], ['fl oz', 'Fluid ounce (US)', .0295735295625], ['cup', 'Cup (US)', .2365882365], ['pt', 'Pint (US)', .473176473], ['qt', 'Quart (US)', .946352946], ['gal', 'Gallon (US)', 3.785411784], ['imp gal', 'Gallon (UK)', 4.54609], ['ft³', 'Cubic foot', 28.316846592], ['in³', 'Cubic inch', .016387064]]},
+  Area: {u: [['cm²', 'Square centimeter', 1e-4], ['m²', 'Square meter', 1], ['ha', 'Hectare', 1e4], ['km²', 'Square kilometer', 1e6], ['in²', 'Square inch', .00064516], ['ft²', 'Square foot', .09290304], ['yd²', 'Square yard', .83612736], ['ac', 'Acre', 4046.8564224], ['mi²', 'Square mile', 2589988.110336]]},
+  Speed: {u: [['m/s', 'Meter per second', 1], ['km/h', 'Kilometer per hour', 1 / 3.6], ['mph', 'Mile per hour', .44704], ['kn', 'Knot', 1852 / 3600], ['ft/s', 'Foot per second', .3048], ['Mach', 'Mach (sea level)', 340.29]]},
+  Time: {u: [['ms', 'Millisecond', .001], ['s', 'Second', 1], ['min', 'Minute', 60], ['h', 'Hour', 3600], ['d', 'Day', 86400], ['wk', 'Week', 604800], ['mo', 'Month (avg)', 2629746], ['yr', 'Year (avg)', 31556952]]},
+  Data: {u: [['b', 'Bit', .125], ['B', 'Byte', 1], ['KB', 'Kilobyte', 1e3], ['MB', 'Megabyte', 1e6], ['GB', 'Gigabyte', 1e9], ['TB', 'Terabyte', 1e12], ['KiB', 'Kibibyte', 1024], ['MiB', 'Mebibyte', 1048576], ['GiB', 'Gibibyte', 1073741824], ['TiB', 'Tebibyte', 1099511627776]]},
+  Energy: {u: [['J', 'Joule', 1], ['kJ', 'Kilojoule', 1000], ['cal', 'Calorie', 4.184], ['kcal', 'Kilocalorie', 4184], ['Wh', 'Watt-hour', 3600], ['kWh', 'Kilowatt-hour', 3.6e6], ['BTU', 'British thermal unit', 1055.05585262], ['eV', 'Electronvolt', 1.602176634e-19]]},
+  Pressure: {u: [['Pa', 'Pascal', 1], ['kPa', 'Kilopascal', 1000], ['bar', 'Bar', 1e5], ['atm', 'Atmosphere', 101325], ['psi', 'Pound per sq inch', 6894.757293168], ['mmHg', 'Millimeter of mercury', 133.322387415], ['inHg', 'Inch of mercury', 3386.389]]}
+};
+const tempTo = {'°C': c => c, '°F': f => (f - 32) * 5 / 9, 'K': k => k - 273.15, '°R': r => (r - 491.67) * 5 / 9}, tempFrom = {'°C': c => c, '°F': c => c * 9 / 5 + 32, 'K': c => c + 273.15, '°R': c => (c + 273.15) * 9 / 5};
+function mountConvert(body) {
+  const st = Object.assign({cat: 'Length', val: '10', from: 'km', to: 'mi'}, store.get('conv', {}));
+  const fmtC = n => { if (!fin(n)) return '—'; const a = Math.abs(n); if (a !== 0 && (a >= 1e12 || a < 1e-6)) return n.toExponential(6).replace('e', '×10^'); return parseFloat(n.toPrecision(10)).toLocaleString('en-US', {maximumFractionDigits: 10}); };
+  const convert = (x, f, t) => { const c = UNITS_DB[st.cat]; if (c.temp) return tempFrom[t](tempTo[f](x)); const F = c.u.find(u => u[0] === f)[2], T = c.u.find(u => u[0] === t)[2]; return x * F / T; };
+  body.innerHTML = `<div class="conv"><div class="conv-cats" role="toolbar" aria-label="Unit category">${Object.keys(UNITS_DB).map(c => `<button type="button" data-cat="${c}" aria-pressed="${c === st.cat}">${c}</button>`).join('')}</div>
+    <div class="panel conv-main"><div class="field"><label for="cvVal">From</label><div class="inp"><input id="cvVal" inputmode="decimal" autocomplete="off"></div><div class="inp"><select id="cvFrom" aria-label="From unit"></select></div></div>
+    <button type="button" class="icon-btn swap" id="cvSwap" aria-label="Swap units" style="margin-bottom:28px">${I.swap}</button>
+    <div class="field"><span class="flabel">To</span><div class="conv-out" id="cvOut" aria-live="polite"></div><div class="inp"><select id="cvTo" aria-label="To unit"></select></div></div></div>
+    <div><div class="inputs-title" style="margin-bottom:10px" id="cvAllT"></div><div class="conv-grid" id="cvAll"></div></div></div>`;
+  const val = $('#cvVal', body), from = $('#cvFrom', body), to = $('#cvTo', body);
+  const fill = () => { const u = UNITS_DB[st.cat].u, opt = u.map(([s, n]) => `<option value="${esc(s)}">${esc(n)} (${esc(s)})</option>`).join(''); from.innerHTML = opt; to.innerHTML = opt; if (!u.some(x => x[0] === st.from)) st.from = u[0][0]; if (!u.some(x => x[0] === st.to)) st.to = u[1][0]; from.value = st.from; to.value = st.to; };
+  const run = () => {
+    store.set('conv', st); const x = toNum(st.val), out = $('#cvOut', body);
+    if (!fin(x)) { out.textContent = 'Enter a number'; $('#cvAll', body).innerHTML = ''; return; }
+    const y = convert(x, st.from, st.to); out.textContent = `${fmtC(y)} ${st.to}`;
+    $('#cvAllT', body).textContent = `${fmtC(x)} ${st.from} in every ${st.cat.toLowerCase()} unit`;
+    $('#cvAll', body).innerHTML = UNITS_DB[st.cat].u.filter(u => u[0] !== st.from).map(([s, n]) => `<button type="button" class="conv-cell ${s === st.to ? 'is-to' : ''}" data-u="${esc(s)}"><small>${esc(n)}</small><b>${fmtC(convert(x, st.from, s))} ${esc(s)}</b></button>`).join('');
+    lastResult = {calc: byId.convert, r: {primary: {label: `${fmtC(x)} ${st.from}`, value: `${fmtC(y)} ${st.to}`}}};
+  };
+  val.value = st.val; fill(); run();
+  val.addEventListener('input', () => { st.val = val.value; run(); });
+  from.addEventListener('change', () => { st.from = from.value; run(); });
+  to.addEventListener('change', () => { st.to = to.value; run(); });
+  $('#cvSwap', body).onclick = () => { [st.from, st.to] = [st.to, st.from]; from.value = st.from; to.value = st.to; run(); };
+  body.addEventListener('click', e => {
+    const c = e.target.closest('[data-cat]'); if (c) { st.cat = c.dataset.cat; $$('[data-cat]', body).forEach(b => b.setAttribute('aria-pressed', b === c)); if (st.cat === 'Temperature' && !fin(toNum(st.val))) st.val = '20'; fill(); run(); return; }
+    const u = e.target.closest('[data-u]'); if (u) { st.to = u.dataset.u; to.value = st.to; run(); }
+  });
+}
+
+/* ====================== App shell ====================== */
+const main = $('#main'), sidebar = $('#sidebar');
+$('#searchLabel').textContent = `Search ${CALCS.length} calculators`;
+function renderSidebar(active) {
+  const item = c => `<a href="#${c.id}" class="nav-item ${c.id === active ? 'active' : ''}" data-id="${c.id}"><span>${esc(c.name)}</span>${favs.includes(c.id) ? '<span class="fav-dot" aria-label="Favorite">★</span>' : ''}</a>`;
+  const favList = favs.map(id => byId[id]).filter(Boolean);
+  sidebar.innerHTML = `<a href="#home" class="nav-item ${active === 'home' ? 'active' : ''}" style="margin-bottom:14px"><span>All calculators</span></a>` +
+    (favList.length ? `<div class="nav-sec"><h3><i style="background:var(--c2)"></i>Favorites</h3>${favList.map(item).join('')}</div>` : '') +
+    CATS.map(c => `<div class="nav-sec"><h3><i style="background:${c.color}"></i>${c.name}</h3>${CALCS.filter(x => x.cat === c.id).map(item).join('')}</div>`).join('') +
+    `<div class="side-foot">Everything runs in your browser. Nothing you enter is sent anywhere.</div>`;
+}
+function renderHome(scrollCat) {
+  document.title = 'Tally Calculators';
+  const favList = favs.map(id => byId[id]).filter(Boolean), rec = recent.map(id => byId[id]).filter(c => c && !favs.includes(c.id)).slice(0, 6);
+  const popular = ['mortgage', 'bmi', 'percentage', 'compound', 'age', 'convert'].map(id => byId[id]);
+  const chips = (l, list) => list.length ? `<div class="quick"><div class="quick-label">${l}</div><div class="qchips">${list.map(c => `<a class="qchip" href="#${c.id}">${favs.includes(c.id) ? '★ ' : ''}${esc(c.name)}</a>`).join('')}</div></div>` : '';
+  main.innerHTML = `<div class="home">
+    <section class="hero"><div><h1>Every calculation, <em>worked out.</em></h1>
+      <p>${CALCS.length} calculators for money, health, math and everyday life. Results update as you type, with charts, schedules and the formula behind every answer.</p>
+      <button class="hero-search" id="heroSearch"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span>Find a calculator</span><kbd>/</kbd></button>
+      ${chips('Your favorites', favList)}${chips('Recently used', rec)}${favList.length || rec.length ? '' : chips('Popular', popular)}
+    </div><div id="homeSci"></div></section>
+    <div class="cats">${CATS.map(c => { const list = CALCS.filter(x => x.cat === c.id); return `<section class="cat" id="cat-${c.id}"><div class="cat-head"><h2>${c.name}</h2><span>${list.length}</span></div><ul class="cat-list">${list.map(x => `<li><a href="#${x.id}"><b>${esc(x.name)}</b><small>${esc(x.desc)}</small></a></li>`).join('')}</ul></section>`; }).join('')}</div>
+    <footer class="home-foot"><span>Tally runs entirely in your browser. No account, no tracking.</span><span>Press <kbd>/</kbd> anywhere to search.</span></footer></div>`;
+  mountScientific($('#homeSci'), 'home', true);
+  $('#heroSearch').onclick = openPalette;
+  if (scrollCat) { const s = $('#cat-' + scrollCat); if (s) { s.scrollIntoView({block: 'start'}); s.classList.add('flash'); setTimeout(() => s.classList.remove('flash'), 1400); } }
+}
+function renderCalc(calc) {
+  current = calc; lastResult = null; document.title = `${calc.name} · Tally`;
+  recent = [calc.id, ...recent.filter(x => x !== calc.id)].slice(0, 10); store.set('recent', recent);
+  const cat = CATS.find(c => c.id === calc.cat), fav = favs.includes(calc.id);
+  main.innerHTML = `<article class="calc"><header><div class="crumbs"><a href="#home">All calculators</a><span>/</span><a href="#cat-${cat.id}">${cat.name}</a></div>
+    <div class="head-row"><h1>${esc(calc.name)}${/Calculator|Generator|Converter|Solver|Graphing/.test(calc.name) ? '' : ' Calculator'}</h1><div class="head-actions">
+      <button class="btn ${fav ? 'on' : ''}" id="favBtn" aria-pressed="${fav}">${fav ? I.starOn : I.star}<span>${fav ? 'Saved' : 'Save'}</span></button>
+      ${calc.fields ? `<button class="btn" id="copyBtn">${I.copy}<span>Copy results</span></button><button class="btn" id="resetBtn">${I.reset}<span>Reset</span></button>` : ''}
+    </div></div><p class="lede">${esc(calc.desc)}</p></header><div class="calc-body ${calc.full ? 'full' : ''}" id="calcBody"></div></article>`;
+  const body = $('#calcBody');
+  if (calc.mount) calc.mount(body); else renderFieldCalc(calc, body);
+  $('#favBtn').onclick = () => { favs = favs.includes(calc.id) ? favs.filter(x => x !== calc.id) : [...favs, calc.id]; store.set('favs', favs); const on = favs.includes(calc.id), b = $('#favBtn'); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); b.innerHTML = `${on ? I.starOn : I.star}<span>${on ? 'Saved' : 'Save'}</span>`; renderSidebar(calc.id); toast(on ? 'Added to favorites' : 'Removed from favorites'); };
+  const cb = $('#copyBtn'); if (cb) cb.onclick = () => { const t = resultText(); t ? copyText(t, 'Results copied') : toast('Fix the inputs first'); };
+  const rb = $('#resetBtn'); if (rb) rb.onclick = () => { initVals(calc, true); walk(calc.fields, f => f.shared && (shared[f.shared] = vals[calc.id][f.id])); saveVals(); renderFieldCalc(calc, body); toast('Reset to example values'); };
+  if (calc.id === 'scientific') setTimeout(() => { if (matchMedia('(pointer:fine)').matches) $('#sci-expr')?.focus(); }, 0);
+}
+function route() {
+  const h = decodeURIComponent(location.hash.slice(1));
+  document.body.classList.remove('nav-open');
+  if (byId[h]) { renderCalc(byId[h]); renderSidebar(h); window.scrollTo(0, 0); }
+  else { current = null; renderSidebar('home'); renderHome(h.startsWith('cat-') ? h.slice(4) : null); if (!h.startsWith('cat-')) window.scrollTo(0, 0); }
+}
+window.addEventListener('hashchange', route);
+
+/* ---------- Command palette ---------- */
+const pal = $('#palette'), palIn = $('#palInput'), palList = $('#palList'); let palItems = [], palSel = 0;
+function score(c, q) {
+  const n = c.name.toLowerCase(), kw = (c.kw || '').toLowerCase(), d = c.desc.toLowerCase(); let s = 0;
+  for (const w of q.split(/\s+/).filter(Boolean)) {
+    let t = 0; if (n.startsWith(w)) t = 100; else if (n.includes(w)) t = 80; else if (kw.split(' ').some(k => k.startsWith(w))) t = 60; else if (kw.includes(w)) t = 45; else if (d.includes(w)) t = 30;
+    else { let i = 0; for (const ch of n) if (ch === w[i]) i++; if (i === w.length && w.length > 1) t = 15; }
+    if (!t) return 0; s += t;
+  }
+  return s;
+}
+function renderPalette(q) {
+  q = q.trim().toLowerCase(); let html = '';
+  if (!q) {
+    const rec = recent.map(id => byId[id]).filter(Boolean).slice(0, 5); palItems = [...rec, ...CALCS.filter(c => !rec.includes(c))];
+    const g = (label, list, off) => list.length ? `<div class="pal-group">${label}</div>` + list.map((c, i) => item(c, off + i)).join('') : '';
+    html = g('Recent', rec, 0) + g('All calculators', palItems.slice(rec.length), rec.length);
+  } else { palItems = CALCS.map(c => [c, score(c, q)]).filter(x => x[1] > 0).sort((a, b) => b[1] - a[1]).map(x => x[0]); html = palItems.map((c, i) => item(c, i)).join('') || `<div class="pal-empty">No calculator matches “${esc(q)}”. Try a broader word like loan, weight or date.</div>`; }
+  palSel = 0; palList.innerHTML = html; highlight();
+  function item(c, i) { return `<a class="pal-item" href="#${c.id}" data-i="${i}"><div><div>${esc(c.name)}</div><small>${esc(c.desc)}</small></div><span class="cat-tag">${CATS.find(x => x.id === c.cat).name}</span></a>`; }
+}
+function highlight() { $$('.pal-item', palList).forEach(el => el.classList.toggle('sel', +el.dataset.i === palSel)); const s = $('.pal-item.sel', palList); if (s) s.scrollIntoView({block: 'nearest'}); }
+function openPalette() { pal.hidden = false; palIn.value = ''; renderPalette(''); palIn.focus(); }
+function closePalette() { pal.hidden = true; }
+palIn.addEventListener('input', () => renderPalette(palIn.value));
+palIn.addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown') { e.preventDefault(); palSel = Math.min(palItems.length - 1, palSel + 1); highlight(); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); palSel = Math.max(0, palSel - 1); highlight(); }
+  else if (e.key === 'Enter') { e.preventDefault(); const c = palItems[palSel]; if (c) { closePalette(); location.hash = c.id; } }
+  else if (e.key === 'Escape') closePalette();
+});
+pal.addEventListener('click', e => { if (e.target === pal) closePalette(); else if (e.target.closest('.pal-item')) closePalette(); });
+palList.addEventListener('mousemove', e => { const it = e.target.closest('.pal-item'); if (it && +it.dataset.i !== palSel) { palSel = +it.dataset.i; highlight(); } });
+$('#searchBtn').onclick = openPalette;
+document.addEventListener('keydown', e => {
+  const typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
+  if ((e.key === 'k' && (e.metaKey || e.ctrlKey)) || (e.key === '/' && !typing)) { e.preventDefault(); pal.hidden ? openPalette() : closePalette(); return; }
+  if (e.key === 'Escape' && !pal.hidden) closePalette();
+  if (!typing && pal.hidden && !e.metaKey && !e.ctrlKey && !e.altKey && e.key.length === 1 && /[\d.+\-*/^()a-z]/i.test(e.key)) { const s = $('.sci-expr'); if (s) s.focus(); }
+});
+
+/* ---------- Theme & mobile nav ---------- */
+const root = document.documentElement, savedTheme = store.get('theme', null);
+if (savedTheme) root.dataset.theme = savedTheme;
+$('#themeBtn').onclick = () => { const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches; root.dataset.theme = dark ? 'light' : 'dark'; store.set('theme', root.dataset.theme); if (current && current.fields) recompute(current); };
+$('#menuBtn').onclick = () => document.body.classList.toggle('nav-open');
+$('#scrim').onclick = () => document.body.classList.remove('nav-open');
+
+route();
+})();
+</script>
+
+</body></html>
